@@ -59,7 +59,18 @@ async function parseJsonSafe(res: Response) {
 
 function toFriendlyNetworkError(error: unknown, fallback: string) {
   if (error instanceof TypeError) {
-    return `${fallback} The backend server is not reachable at ${API_BASE_URL}.`
+    const isLocalhost =
+      API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')
+
+    if (isLocalhost) {
+      return `${fallback} The site is calling localhost instead of your live API. Set NEXT_PUBLIC_API_BASE_URL on Vercel to your Render URL (e.g. https://your-app.onrender.com/api) and redeploy.`
+    }
+
+    return `${fallback} Cannot reach the API at ${API_BASE_URL}. Check that Render is running and CLIENT_URL on Render matches your Vercel URL exactly.`
+  }
+
+  if (error instanceof Error && error.message === 'Failed to fetch') {
+    return `${fallback} Cannot reach the API at ${API_BASE_URL}. Check Vercel env vars and Render CORS settings.`
   }
 
   return fallback
@@ -111,7 +122,7 @@ export async function login(payload: { email: string; password: string }) {
     setSession(data.token, data.user)
     return data
   } catch (error) {
-    if (error instanceof Error && error.message !== 'Unable to log in') {
+    if (error instanceof Error && !['Unable to log in', 'Failed to fetch'].includes(error.message)) {
       throw error
     }
     throw new Error(toFriendlyNetworkError(error, 'Unable to log in.'))
@@ -138,7 +149,7 @@ export async function register(payload: {
     setSession(data.token, data.user)
     return data
   } catch (error) {
-    if (error instanceof Error && error.message !== 'Unable to create account') {
+    if (error instanceof Error && !['Unable to create account', 'Failed to fetch'].includes(error.message)) {
       throw error
     }
     throw new Error(
