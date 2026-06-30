@@ -1,0 +1,146 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-poppins), 'Poppins Fallback';
+  --font-sans: var(--font-inter), 'Inter Fallback';
+  --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #1a1f2e;
+  --card: #ffffff;
+  --card-foreground: #1a1f2e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1f2e;
+  --primary: #0b3d91;
+  --primary-foreground: #ffffff;
+  --secondary: #d4af37;
+  --secondary-foreground: #1a1f2e;
+  --muted: #f3f5f9;
+  --muted-foreground: #5b6577;
+  --accent: #eef2fb;
+  --accent-foreground: #0b3d91;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ea580c;
+  --warning-foreground: #ffffff;
+  --border: #e3e8f0;
+  --input: #e3e8f0;
+  --ring: #0b3d91;
+  --chart-1: #0b3d91;
+  --chart-2: #d4af37;
+  --chart-3: #3b6fd4;
+  --chart-4: #16a34a;
+  --chart-5: #ea580c;
+  --radius: 0.625rem;
+  --sidebar: #f7f9fc;
+  --sidebar-foreground: #1a1f2e;
+  --sidebar-primary: #0b3d91;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef2fb;
+  --sidebar-accent-foreground: #0b3d91;
+  --sidebar-border: #e3e8f0;
+  --sidebar-ring: #0b3d91;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0a0f1c;
+  --foreground: #e9edf5;
+  --card: #111827;
+  --card-foreground: #e9edf5;
+  --popover: #111827;
+  --popover-foreground: #e9edf5;
+  --primary: #4a7fd6;
+  --primary-foreground: #ffffff;
+  --secondary: #d4af37;
+  --secondary-foreground: #0a0f1c;
+  --muted: #1b2436;
+  --muted-foreground: #9aa6bd;
+  --accent: #1b2436;
+  --accent-foreground: #d4af37;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #22c55e;
+  --success-foreground: #04130a;
+  --warning: #f97316;
+  --warning-foreground: #160a04;
+  --border: #243049;
+  --input: #243049;
+  --ring: #4a7fd6;
+  --chart-1: #4a7fd6;
+  --chart-2: #d4af37;
+  --chart-3: #6ea0e8;
+  --chart-4: #22c55e;
+  --chart-5: #f97316;
+  --sidebar: #0d1424;
+  --sidebar-foreground: #e9edf5;
+  --sidebar-primary: #4a7fd6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1b2436;
+  --sidebar-accent-foreground: #d4af37;
+  --sidebar-border: #243049;
+  --sidebar-ring: #4a7fd6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
