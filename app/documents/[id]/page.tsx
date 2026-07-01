@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, Download, Loader2, Lock } from 'lucide-react'
+import { DocumentViewer } from '@/components/documents/document-viewer'
 import {
   downloadDocumentFile,
   fetchDocument,
+  getDocumentFilename,
   getStoredUser,
   type UploadedDocument,
 } from '@/lib/api-client'
@@ -42,7 +44,11 @@ export default function DocumentDetailPage() {
     setDownloading(true)
     setError('')
     try {
-      await downloadDocumentFile(document._id, `${document.title}.pdf`)
+      await downloadDocumentFile(
+        document._id,
+        getDocumentFilename(document.title, document.fileType),
+        document.fileType,
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Download failed.')
     } finally {
@@ -69,17 +75,18 @@ export default function DocumentDetailPage() {
     )
   }
 
-  const locked = document.locked || !document.filePath
+  const locked = document.locked
+  const canRead = !locked && document.canPreview !== false
 
   return (
     <section className="py-20">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <Button variant="ghost" className="mb-6" render={<Link href="/laws" />}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Laws
         </Button>
 
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -105,7 +112,7 @@ export default function DocumentDetailPage() {
               <div className="rounded-lg border border-border bg-muted/40 p-5">
                 <p className="font-medium">This document requires a paid plan</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Upgrade your account or redeem an admin coupon to view and download premium uploads.
+                  Upgrade your account or redeem an admin coupon to read and download premium uploads.
                 </p>
                 <div className="mt-4 flex gap-3">
                   <Button render={<Link href="/pricing" />}>View Plans</Button>
@@ -115,13 +122,18 @@ export default function DocumentDetailPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button onClick={handleDownload} disabled={downloading}>
                   <Download className="mr-2 h-4 w-4" />
-                  {downloading ? 'Downloading...' : 'Download Document'}
+                  {downloading ? 'Downloading...' : 'Download'}
                 </Button>
                 {user?.access?.isAdmin ? (
                   <Badge variant="secondary">Admin — free unlimited access</Badge>
+                ) : null}
+                {document.fileAvailable === false ? (
+                  <p className="text-sm text-destructive">
+                    File missing on server — ask admin to re-upload.
+                  </p>
                 ) : null}
               </div>
             )}
@@ -129,6 +141,16 @@ export default function DocumentDetailPage() {
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </CardContent>
         </Card>
+
+        {canRead ? (
+          <DocumentViewer
+            documentId={document._id}
+            fileType={document.fileType}
+            title={document.title}
+            onDownload={handleDownload}
+            downloading={downloading}
+          />
+        ) : null}
       </div>
     </section>
   )

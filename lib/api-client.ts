@@ -43,6 +43,8 @@ export interface UploadedDocument {
   views: number
   createdAt: string
   locked?: boolean
+  canPreview?: boolean
+  fileAvailable?: boolean
 }
 
 const API_BASE_URL =
@@ -289,60 +291,72 @@ export async function fetchDocument(documentId: string) {
   })
 
   const data = await parseJsonSafe(res)
-  if (!res.ok) {
-    throw new Error(parseErrorMessage(data, 'Unable to fetch document'))
+  if (data?.data) {
+    return data.data as UploadedDocument
   }
 
-  return data.data as UploadedDocument
+  throw new Error(parseErrorMessage(data, 'Unable to fetch document'))
 }
 
-export async function downloadDocumentFile(documentId: string, filename: string) {
+export function getDocumentFilename(title: string, fileType: string) {
+  const safeTitle = title.trim().replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-') || 'document'
+  if (fileType.includes('pdf')) return `${safeTitle}.pdf`
+  if (fileType.includes('word') || fileType.includes('doc')) return `${safeTitle}.docx`
+  return safeTitle
+}
+
+export function isPdfDocument(fileType: string) {
+  return fileType.toLowerCase().includes('pdf')
+}
+
+async function fetchDocumentFileResponse(documentId: string, inline = false) {
   const token = getStoredToken()
   if (!token) {
-    throw new Error('Please log in to download this document.')
+    throw new Error('Please log in to access this document.')
   }
 
-  const res = await fetch(`${API_BASE_URL}/documents/download/${documentId}`, {
+  const query = inline ? '?inline=1' : ''
+  const res = await fetch(`${API_BASE_URL}/documents/download/${documentId}${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   })
 
   if (!res.ok) {
-    const data = await parseJsonSafe(res)
-    throw new Error(parseErrorMessage(data, 'Unable to download document'))
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const data = await parseJsonSafe(res)
+      throw new Error(parseErrorMessage(data, 'Unable to access document'))
+    }
+
+    throw new Error(`Unable to access document (${res.status})`)
   }
 
+  return res
+}
+
+export async function fetchDocumentFileBlob(documentId: string) {
+  const res = await fetchDocumentFileResponse(documentId, true)
+  return res.blob()
+}
+
+export async function downloadDocumentFile(
+  documentId: string,
+  filename: string,
+  fileType?: string,
+) {
+  const res = await fetchDocumentFileResponse(documentId, false)
   const blob = await res.blob()
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = filename
+  link.download = filename || getDocumentFilename('document', fileType || blob.type)
   link.click()
   window.URL.revokeObjectURL(url)
 }
 
 export async function openDocumentFile(documentId: string) {
-  const token = getStoredToken()
-  if (!token) {
-    throw new Error('Please log in to open this document.')
-  }
-
-  const res = await fetch(
-    `${API_BASE_URL}/documents/download/${documentId}?inline=1`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  )
-
-  if (!res.ok) {
-    const data = await parseJsonSafe(res)
-    throw new Error(parseErrorMessage(data, 'Unable to open document'))
-  }
-
-  const blob = await res.blob()
+  const blob = await fetchDocumentFileBlob(documentId)
   const url = window.URL.createObjectURL(blob)
   window.open(url, '_blank', 'noopener,noreferrer')
 }

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ExternalLink, FileText, Loader2, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, BookOpen, FileText, Loader2, Trash2 } from 'lucide-react'
 import {
   deleteDocument,
   fetchDocuments,
-  openDocumentFile,
   type UploadedDocument,
 } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
@@ -32,7 +32,6 @@ export default function AdminDocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [openingId, setOpeningId] = useState<string | null>(null)
 
   async function loadDocuments() {
     setError('')
@@ -49,19 +48,6 @@ export default function AdminDocumentsPage() {
   useEffect(() => {
     loadDocuments()
   }, [])
-
-  async function handleOpen(documentId: string) {
-    setOpeningId(documentId)
-    setError('')
-
-    try {
-      await openDocumentFile(documentId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to open document.')
-    } finally {
-      setOpeningId(null)
-    }
-  }
 
   async function handleDelete(documentId: string) {
     if (!window.confirm('Delete this document permanently?')) return
@@ -91,7 +77,7 @@ export default function AdminDocumentsPage() {
             <div>
               <h1 className="font-heading text-3xl font-bold">Manage Documents</h1>
               <p className="mt-2 text-muted-foreground">
-                View and remove uploaded PDF and Word files
+                Read uploaded files on the page or remove them from the library
               </p>
             </div>
           </div>
@@ -139,13 +125,12 @@ export default function AdminDocumentsPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
-                      disabled={openingId === doc._id}
-                      onClick={() => handleOpen(doc._id)}
+                      render={<Link href={`/documents/${doc._id}`} />}
                     >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      {openingId === doc._id ? 'Opening...' : 'Open File'}
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Read Document
                     </Button>
                     <Button
                       variant="destructive"

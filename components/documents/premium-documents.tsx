@@ -92,7 +92,7 @@ export function PremiumDocuments() {
               </Button>
             ) : (
               <Button size="sm" render={<Link href={`/documents/${doc._id}`} />}>
-                View Document
+                Read Document
               </Button>
             )}
           </CardContent>

@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
               <FileText className="mx-auto h-12 w-12 text-primary" />
               <CardTitle>Manage Documents</CardTitle>
               <CardDescription>
-                View, open, and delete uploaded documents
+                Read, download, and delete uploaded documents
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
