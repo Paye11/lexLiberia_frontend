@@ -64,6 +64,10 @@ export const legalService = {
 
     try {
       const planData = await fetchPlans()
+      if (!Array.isArray(planData) || planData.length === 0) {
+        return plans
+      }
+
       return planData.map((plan: Record<string, unknown>) => ({
         id: String(plan._id ?? plan.id ?? ''),
         name: String(plan.name ?? ''),

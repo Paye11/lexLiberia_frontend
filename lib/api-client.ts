@@ -1,9 +1,16 @@
+export interface UserPlan {
+  _id: string
+  name: string
+  description?: string
+  dailyViewLimit?: number
+}
+
 export interface SessionUser {
   _id: string
   name: string
   email: string
   role: 'user' | 'admin'
-  plan?: string | null
+  plan?: UserPlan | null
 }
 
 interface AuthResponse {
@@ -206,7 +213,7 @@ export async function uploadDocument(payload: {
 export async function fetchPlans() {
   const res = await fetch(`${API_BASE_URL}/plans`, {
     headers: { 'Content-Type': 'application/json' },
-    next: { revalidate: 300 },
+    cache: 'no-store',
   })
 
   const data = await parseJsonSafe(res)
@@ -215,4 +222,113 @@ export async function fetchPlans() {
   }
 
   return data.data
+}
+
+export async function getMe() {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Not authenticated')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.user) {
+    throw new Error(parseErrorMessage(data, 'Unable to load account'))
+  }
+
+  setSession(token, data.user)
+  return data.user as SessionUser
+}
+
+export async function fetchDocuments(limit = 50) {
+  const res = await fetch(`${API_BASE_URL}/documents?limit=${limit}`, {
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch documents'))
+  }
+
+  return data.data as UploadedDocument[]
+}
+
+export async function deleteDocument(documentId: string) {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in as an admin first.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to delete document'))
+  }
+
+  return data
+}
+
+export async function fetchAdminStats() {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in as an admin first.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/stats`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch admin stats'))
+  }
+
+  return data.data as { documents: number; users: number; plans: number }
+}
+
+export async function fetchAdminUsers() {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in as an admin first.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/admin/users`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch users'))
+  }
+
+  return data.data as Array<{
+    _id: string
+    name: string
+    email: string
+    role: string
+    plan?: { name: string } | null
+    createdAt: string
+  }>
 }

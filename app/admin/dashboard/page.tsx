@@ -1,14 +1,31 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Users, LogOut } from 'lucide-react'
-import { clearSession } from '@/lib/api-client'
+import { FileText, Upload, Users, LogOut, Loader2 } from 'lucide-react'
+import { clearSession, fetchAdminStats } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { SectionHeading } from '@/components/section-heading'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
+  const [stats, setStats] = useState({ documents: 0, users: 0, plans: 0 })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const data = await fetchAdminStats()
+        setStats(data)
+      } catch {
+        setStats({ documents: 0, users: 0, plans: 0 })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadStats()
+  }, [])
 
   const handleLogout = () => {
     clearSession()
@@ -18,10 +35,12 @@ export default function AdminDashboardPage() {
   return (
     <section className="py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-12">
+        <div className="mb-12 flex items-center justify-between">
           <div>
             <h1 className="font-heading text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground mt-2">Manage documents and settings for LexLiberia</p>
+            <p className="mt-2 text-muted-foreground">
+              Upload and manage legal documents for LexLiberia
+            </p>
           </div>
           <Button variant="destructive" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -29,50 +48,75 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
 
+        <div className="mb-12 grid gap-4 md:grid-cols-3">
+          {[
+            { label: 'Documents', value: stats.documents },
+            { label: 'Users', value: stats.users },
+            { label: 'Plans', value: stats.plans },
+          ].map((item) => (
+            <Card key={item.label}>
+              <CardContent className="pt-6">
+                {loading ? (
+                  <Loader2 className="size-6 animate-spin text-primary" />
+                ) : (
+                  <>
+                    <p className="font-heading text-3xl font-bold">{item.value}</p>
+                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
         <div className="grid gap-6 md:grid-cols-3">
-          <Card 
-            className="hover:border-primary/50 transition-colors cursor-pointer"
+          <Card
+            className="cursor-pointer transition-colors hover:border-primary/50"
             onClick={() => router.push('/admin/upload')}
           >
             <CardHeader className="text-center">
               <Upload className="mx-auto h-12 w-12 text-primary" />
               <CardTitle>Upload Documents</CardTitle>
-              <CardDescription>Upload new laws and legal documents</CardDescription>
+              <CardDescription>
+                Upload PDF and Word legal documents
+              </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <Button>Upload Now</Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:border-primary/50 transition-colors">
+          <Card
+            className="cursor-pointer transition-colors hover:border-primary/50"
+            onClick={() => router.push('/admin/documents')}
+          >
             <CardHeader className="text-center">
               <FileText className="mx-auto h-12 w-12 text-primary" />
               <CardTitle>Manage Documents</CardTitle>
-              <CardDescription>View and organize all uploaded documents</CardDescription>
+              <CardDescription>
+                View and delete uploaded documents
+              </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <Button variant="outline">View Documents</Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:border-primary/50 transition-colors">
+          <Card
+            className="cursor-pointer transition-colors hover:border-primary/50"
+            onClick={() => router.push('/admin/users')}
+          >
             <CardHeader className="text-center">
               <Users className="mx-auto h-12 w-12 text-primary" />
               <CardTitle>Manage Users</CardTitle>
-              <CardDescription>View and manage platform users</CardDescription>
+              <CardDescription>
+                View registered users and their plans
+              </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <Button variant="outline">View Users</Button>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="mt-12">
-          <SectionHeading 
-            eyebrow="Quick Stats" 
-            title="Platform Overview"
-            description="Current status of your LexLiberia platform"
-          />
         </div>
       </div>
     </section>
