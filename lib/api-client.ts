@@ -9,6 +9,7 @@ export interface UserPlan {
 export interface UserAccess {
   isAdmin: boolean
   hasPaidPlan: boolean
+  isPlanExpired?: boolean
   canViewPremiumDocuments: boolean
   canUseAiResearch: boolean
 }
@@ -19,6 +20,8 @@ export interface SessionUser {
   email: string
   role: 'user' | 'admin'
   plan?: UserPlan | null
+  planExpiresAt?: string | null
+  isActive?: boolean
   access?: UserAccess
 }
 
@@ -319,6 +322,31 @@ export async function downloadDocumentFile(documentId: string, filename: string)
   window.URL.revokeObjectURL(url)
 }
 
+export async function openDocumentFile(documentId: string) {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in to open this document.')
+  }
+
+  const res = await fetch(
+    `${API_BASE_URL}/documents/download/${documentId}?inline=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  if (!res.ok) {
+    const data = await parseJsonSafe(res)
+    throw new Error(parseErrorMessage(data, 'Unable to open document'))
+  }
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
 export async function redeemCoupon(code: string) {
   const token = getStoredToken()
   if (!token) {
@@ -493,7 +521,175 @@ export async function fetchAdminUsers() {
     name: string
     email: string
     role: string
-    plan?: { name: string } | null
+    plan?: { name: string; priceMonthly?: number } | null
+    planExpiresAt?: string | null
+    isActive: boolean
     createdAt: string
+    latestPayment?: {
+      amount: number
+      billingCycle: string
+      paymentMethod: string
+      status: string
+      startDate: string
+      endDate: string
+      planName?: string
+    } | null
   }>
+}
+
+export async function disableAdminUser(userId: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/disable`, {
+    method: 'PATCH',
+    headers: authHeaders(true),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to disable user'))
+  }
+
+  return data
+}
+
+export async function enableAdminUser(userId: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/enable`, {
+    method: 'PATCH',
+    headers: authHeaders(true),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to enable user'))
+  }
+
+  return data
+}
+
+export async function deleteAdminUser(userId: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: authHeaders(true),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to delete user'))
+  }
+
+  return data
+}
+
+export async function sendAdminMessage(payload: {
+  userId: string
+  subject: string
+  body: string
+}) {
+  const res = await fetch(`${API_BASE_URL}/admin/messages`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to send message'))
+  }
+
+  return data
+}
+
+export interface PublicNotice {
+  _id: string
+  title: string
+  content: string
+  createdAt: string
+}
+
+export interface AdminNotice extends PublicNotice {
+  type: 'public' | 'email' | 'both'
+  isPublished: boolean
+  emailResults?: Array<{ email: string; sent: boolean; reason?: string }>
+}
+
+export async function fetchPublicNotices() {
+  const res = await fetch(`${API_BASE_URL}/notices/public`, {
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    return [] as PublicNotice[]
+  }
+
+  return data.data as PublicNotice[]
+}
+
+export async function fetchAdminNotices() {
+  const res = await fetch(`${API_BASE_URL}/admin/notices`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch notices'))
+  }
+
+  return data.data as AdminNotice[]
+}
+
+export async function createAdminNotice(payload: {
+  title: string
+  content: string
+  type: 'public' | 'email' | 'both'
+}) {
+  const res = await fetch(`${API_BASE_URL}/admin/notices`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to create notice'))
+  }
+
+  return data
+}
+
+export interface UserMessage {
+  _id: string
+  subject: string
+  body: string
+  readAt?: string | null
+  createdAt: string
+  sender?: { name: string; email: string; role: string }
+}
+
+export async function fetchMyMessages() {
+  const res = await fetch(`${API_BASE_URL}/messages`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch messages'))
+  }
+
+  return data.data as UserMessage[]
+}
+
+export async function markMessageRead(messageId: string) {
+  const res = await fetch(`${API_BASE_URL}/messages/${messageId}/read`, {
+    method: 'PATCH',
+    headers: authHeaders(true),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to mark message as read'))
+  }
+
+  return data
 }

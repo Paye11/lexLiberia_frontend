@@ -1,5 +1,6 @@
 import { Hero } from '@/components/home/hero'
 import { QuickSearch } from '@/components/home/quick-search'
+import { PublicNotices } from '@/components/home/public-notices'
 import { FeaturedCategories } from '@/components/home/featured-categories'
 import { LatestUpdates } from '@/components/home/latest-updates'
 import { PlansSection } from '@/components/pricing/plans-section'
@@ -19,6 +20,7 @@ export default async function HomePage() {
     <>
       <Hero />
       <QuickSearch />
+      <PublicNotices />
       <FeaturedCategories categories={categories} />
       <LatestUpdates updates={updates} />
       <PlansSection plans={plans} />

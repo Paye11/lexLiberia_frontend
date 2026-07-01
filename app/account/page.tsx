@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Crown, Loader2, Ticket } from 'lucide-react'
-import { getAccessProfile, getMe, getStoredUser, redeemCoupon, type SessionUser } from '@/lib/api-client'
+import { Crown, Loader2, Mail, Ticket } from 'lucide-react'
+import {
+  fetchMyMessages,
+  getAccessProfile,
+  getMe,
+  getStoredUser,
+  markMessageRead,
+  redeemCoupon,
+  type SessionUser,
+  type UserMessage,
+} from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,6 +27,8 @@ export default function AccountPage() {
   const [couponMessage, setCouponMessage] = useState('')
   const [couponError, setCouponError] = useState('')
   const [redeeming, setRedeeming] = useState(false)
+  const [messages, setMessages] = useState<UserMessage[]>([])
+  const [messagesLoading, setMessagesLoading] = useState(true)
 
   useEffect(() => {
     async function loadAccount() {
@@ -30,9 +41,19 @@ export default function AccountPage() {
 
         const profile = await getAccessProfile()
         setUser(profile.user)
+
+        try {
+          const inbox = await fetchMyMessages()
+          setMessages(inbox)
+        } catch {
+          setMessages([])
+        } finally {
+          setMessagesLoading(false)
+        }
       } catch {
         const freshUser = await getMe()
         setUser(freshUser)
+        setMessagesLoading(false)
       } finally {
         setLoading(false)
       }
@@ -40,6 +61,21 @@ export default function AccountPage() {
 
     loadAccount()
   }, [])
+
+  async function handleMarkRead(messageId: string) {
+    try {
+      await markMessageRead(messageId)
+      setMessages((current) =>
+        current.map((message) =>
+          message._id === messageId
+            ? { ...message, readAt: new Date().toISOString() }
+            : message,
+        ),
+      )
+    } catch {
+      // ignore read errors
+    }
+  }
 
   async function handleRedeem(e: React.FormEvent) {
     e.preventDefault()
@@ -143,6 +179,11 @@ export default function AccountPage() {
                       Unlimited document views
                     </p>
                   )}
+                  {user.planExpiresAt ? (
+                    <p className="text-sm text-muted-foreground">
+                      Expires: {new Date(user.planExpiresAt).toLocaleDateString()}
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -209,6 +250,56 @@ export default function AccountPage() {
               </CardContent>
             </Card>
           ) : null}
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Mail className="size-5 text-primary" />
+                <CardTitle>Messages from Admin</CardTitle>
+              </div>
+              <CardDescription>Important updates sent to your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {messagesLoading ? (
+                <Loader2 className="size-6 animate-spin text-primary" />
+              ) : messages.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No messages yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message._id}
+                      className="rounded-lg border border-border p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium">{message.subject}</p>
+                        {!message.readAt ? (
+                          <Badge variant="secondary">Unread</Badge>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                        {message.body}
+                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(message.createdAt).toLocaleString()}
+                        </p>
+                        {!message.readAt ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleMarkRead(message._id)}
+                          >
+                            Mark as read
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>

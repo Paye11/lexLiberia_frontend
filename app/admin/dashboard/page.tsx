@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Users, LogOut, Loader2, Ticket } from 'lucide-react'
+import { FileText, Upload, Users, LogOut, Loader2, Ticket, Megaphone } from 'lucide-react'
 import { clearSession, fetchAdminStats } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           <Card
             className="cursor-pointer transition-colors hover:border-primary/50"
             onClick={() => router.push('/admin/upload')}
@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
               <FileText className="mx-auto h-12 w-12 text-primary" />
               <CardTitle>Manage Documents</CardTitle>
               <CardDescription>
-                View and delete uploaded documents
+                View, open, and delete uploaded documents
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
               <Users className="mx-auto h-12 w-12 text-primary" />
               <CardTitle>Manage Users</CardTitle>
               <CardDescription>
-                View registered users and their plans
+                View registered users, payments, and account actions
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
@@ -131,6 +131,22 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="text-center">
               <Button variant="outline">Manage Coupons</Button>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="cursor-pointer transition-colors hover:border-primary/50"
+            onClick={() => router.push('/admin/notices')}
+          >
+            <CardHeader className="text-center">
+              <Megaphone className="mx-auto h-12 w-12 text-primary" />
+              <CardTitle>Post Notices</CardTitle>
+              <CardDescription>
+                Publish homepage announcements or email all users
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button variant="outline">Manage Notices</Button>
             </CardContent>
           </Card>
         </div>

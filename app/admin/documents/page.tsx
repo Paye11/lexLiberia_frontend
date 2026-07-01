@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, FileText, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, ExternalLink, FileText, Loader2, Trash2 } from 'lucide-react'
 import {
   deleteDocument,
   fetchDocuments,
+  openDocumentFile,
   type UploadedDocument,
 } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ export default function AdminDocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [openingId, setOpeningId] = useState<string | null>(null)
 
   async function loadDocuments() {
     setError('')
@@ -47,6 +49,19 @@ export default function AdminDocumentsPage() {
   useEffect(() => {
     loadDocuments()
   }, [])
+
+  async function handleOpen(documentId: string) {
+    setOpeningId(documentId)
+    setError('')
+
+    try {
+      await openDocumentFile(documentId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to open document.')
+    } finally {
+      setOpeningId(null)
+    }
+  }
 
   async function handleDelete(documentId: string) {
     if (!window.confirm('Delete this document permanently?')) return
@@ -122,15 +137,26 @@ export default function AdminDocumentsPage() {
                       Uploaded {new Date(doc.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={deletingId === doc._id}
-                    onClick={() => handleDelete(doc._id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {deletingId === doc._id ? 'Deleting...' : 'Delete'}
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={openingId === doc._id}
+                      onClick={() => handleOpen(doc._id)}
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      {openingId === doc._id ? 'Opening...' : 'Open File'}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deletingId === doc._id}
+                      onClick={() => handleDelete(doc._id)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {deletingId === doc._id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
