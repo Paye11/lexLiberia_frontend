@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { LawsExplorer } from '@/components/laws/laws-explorer'
+import { PremiumDocuments } from '@/components/documents/premium-documents'
 import { legalService } from '@/services/legal-service'
 
 export const metadata: Metadata = {
@@ -35,6 +36,23 @@ export default async function LawsPage() {
         <Suspense fallback={null}>
           <LawsExplorer laws={laws} categories={categories} />
         </Suspense>
+
+        <section className="border-t border-border bg-muted/20 py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <p className="font-mono text-xs uppercase tracking-widest text-primary">
+              Premium Library
+            </p>
+            <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight">
+              Admin-uploaded documents
+            </h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              These PDF and Word files are uploaded by LexLiberia admins and available to paid accounts. Free users can see titles but need to upgrade or redeem a coupon to view.
+            </p>
+            <div className="mt-8">
+              <PremiumDocuments />
+            </div>
+          </div>
+        </section>
     </>
   )
 }

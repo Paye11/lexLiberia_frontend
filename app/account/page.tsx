@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Crown, Loader2 } from 'lucide-react'
-import { getMe, getStoredUser, type SessionUser } from '@/lib/api-client'
+import { Crown, Loader2, Ticket } from 'lucide-react'
+import { getAccessProfile, getMe, getStoredUser, redeemCoupon, type SessionUser } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
@@ -12,6 +14,10 @@ export default function AccountPage() {
   const [user, setUser] = useState<SessionUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [couponMessage, setCouponMessage] = useState('')
+  const [couponError, setCouponError] = useState('')
+  const [redeeming, setRedeeming] = useState(false)
 
   useEffect(() => {
     async function loadAccount() {
@@ -22,10 +28,11 @@ export default function AccountPage() {
           return
         }
 
+        const profile = await getAccessProfile()
+        setUser(profile.user)
+      } catch {
         const freshUser = await getMe()
         setUser(freshUser)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unable to load account.')
       } finally {
         setLoading(false)
       }
@@ -33,6 +40,24 @@ export default function AccountPage() {
 
     loadAccount()
   }, [])
+
+  async function handleRedeem(e: React.FormEvent) {
+    e.preventDefault()
+    setRedeeming(true)
+    setCouponError('')
+    setCouponMessage('')
+
+    try {
+      const result = await redeemCoupon(couponCode)
+      setUser(result.user)
+      setCouponMessage(result.message || 'Coupon applied successfully.')
+      setCouponCode('')
+    } catch (err) {
+      setCouponError(err instanceof Error ? err.message : 'Unable to redeem coupon.')
+    } finally {
+      setRedeeming(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -128,11 +153,62 @@ export default function AccountPage() {
                 </div>
               )}
 
+              {user.access?.isAdmin ? (
+                <Badge variant="gold" className="mt-3">
+                  Admin — full free access to documents and AI research
+                </Badge>
+              ) : user.access?.hasPaidPlan ? (
+                <Badge variant="gold" className="mt-3">
+                  Premium access active
+                </Badge>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Free plan — premium uploads and AI research require a paid plan or coupon.
+                </p>
+              )}
+
               <Button className="mt-6" render={<Link href="/pricing" />}>
                 View All Plans
               </Button>
             </CardContent>
           </Card>
+
+          {!user.access?.isAdmin ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Ticket className="size-5 text-primary" />
+                  <CardTitle>Redeem Coupon</CardTitle>
+                </div>
+                <CardDescription>
+                  Enter an admin coupon code to upgrade your plan without payment
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleRedeem} className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="coupon">Coupon Code</Label>
+                    <Input
+                      id="coupon"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="ENTER-CODE"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="sm:self-end" disabled={redeeming}>
+                    {redeeming ? 'Applying...' : 'Apply Coupon'}
+                  </Button>
+                </form>
+                {couponMessage ? (
+                  <p className="mt-3 text-sm text-success">{couponMessage}</p>
+                ) : null}
+                {couponError ? (
+                  <p className="mt-3 text-sm text-destructive">{couponError}</p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
     </section>

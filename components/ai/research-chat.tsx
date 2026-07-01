@@ -1,11 +1,13 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowUp, BookOpen, Loader2, Scale, Sparkles, Globe } from 'lucide-react'
+import { ArrowUp, BookOpen, Loader2, Lock, Scale, Sparkles, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { ChatMessage } from '@/types'
 import { generateMockAnswer } from '@/lib/ai-mock'
+import { getAccessProfile, getStoredUser, type UserAccess } from '@/lib/api-client'
 
 const suggestions = [
   'What are the grounds for divorce under Liberian law?',
@@ -18,7 +20,39 @@ export function ResearchChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
+  const [access, setAccess] = useState<UserAccess | null>(null)
+  const [checkingAccess, setCheckingAccess] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    async function loadAccess() {
+      const stored = getStoredUser()
+      if (stored?.access) {
+        setAccess(stored.access)
+        setCheckingAccess(false)
+        return
+      }
+
+      if (!stored) {
+        setAccess(null)
+        setCheckingAccess(false)
+        return
+      }
+
+      try {
+        const profile = await getAccessProfile()
+        setAccess(profile.access)
+      } catch {
+        setAccess(stored.access ?? null)
+      } finally {
+        setCheckingAccess(false)
+      }
+    }
+
+    loadAccess()
+  }, [])
+
+  const canResearch = access?.canUseAiResearch ?? false
 
   function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -74,6 +108,39 @@ export function ResearchChat() {
   }
 
   const hasConversation = messages.length > 0
+
+  if (checkingAccess) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!canResearch) {
+    return (
+      <section className="flex h-[calc(100vh-4rem)] items-center justify-center px-4">
+        <div className="max-w-lg text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Lock className="size-7" />
+          </div>
+          <h1 className="mt-6 font-heading text-2xl font-bold">AI Research requires a paid plan</h1>
+          <p className="mt-3 text-muted-foreground">
+            Upgrade your account or redeem an admin coupon to unlock AI legal research and premium document access.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button render={<Link href="/login" />}>Login</Button>
+            <Button variant="outline" render={<Link href="/pricing" />}>
+              View Plans
+            </Button>
+            <Button variant="outline" render={<Link href="/account" />}>
+              Redeem Coupon
+            </Button>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">

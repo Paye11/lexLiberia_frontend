@@ -3,6 +3,14 @@ export interface UserPlan {
   name: string
   description?: string
   dailyViewLimit?: number
+  priceMonthly?: number
+}
+
+export interface UserAccess {
+  isAdmin: boolean
+  hasPaidPlan: boolean
+  canViewPremiumDocuments: boolean
+  canUseAiResearch: boolean
 }
 
 export interface SessionUser {
@@ -11,6 +19,7 @@ export interface SessionUser {
   email: string
   role: 'user' | 'admin'
   plan?: UserPlan | null
+  access?: UserAccess
 }
 
 interface AuthResponse {
@@ -25,11 +34,12 @@ export interface UploadedDocument {
   title: string
   description: string
   category: string
-  filePath: string
+  filePath?: string
   fileType: string
   fileSize: number
   views: number
   createdAt: string
+  locked?: boolean
 }
 
 const API_BASE_URL =
@@ -41,6 +51,14 @@ const USER_KEY = 'lexliberia_user'
 
 function isBrowser() {
   return typeof window !== 'undefined'
+}
+
+function authHeaders(includeJson = false) {
+  const token = getStoredToken()
+  const headers: Record<string, string> = {}
+  if (includeJson) headers['Content-Type'] = 'application/json'
+  if (token) headers.Authorization = `Bearer ${token}`
+  return headers
 }
 
 function parseErrorMessage(payload: unknown, fallback: string) {
@@ -249,7 +267,7 @@ export async function getMe() {
 
 export async function fetchDocuments(limit = 50) {
   const res = await fetch(`${API_BASE_URL}/documents?limit=${limit}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(true),
     cache: 'no-store',
   })
 
@@ -259,6 +277,153 @@ export async function fetchDocuments(limit = 50) {
   }
 
   return data.data as UploadedDocument[]
+}
+
+export async function fetchDocument(documentId: string) {
+  const res = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch document'))
+  }
+
+  return data.data as UploadedDocument
+}
+
+export async function downloadDocumentFile(documentId: string, filename: string) {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in to download this document.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/documents/download/${documentId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    const data = await parseJsonSafe(res)
+    throw new Error(parseErrorMessage(data, 'Unable to download document'))
+  }
+
+  const blob = await res.blob()
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  window.URL.revokeObjectURL(url)
+}
+
+export async function redeemCoupon(code: string) {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in to redeem a coupon.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/coupons/redeem`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({ code }),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.user) {
+    throw new Error(parseErrorMessage(data, 'Unable to redeem coupon'))
+  }
+
+  setSession(token, data.user)
+  return data
+}
+
+export async function getAccessProfile() {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Not authenticated')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/coupons/access`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to load access profile'))
+  }
+
+  if (data.data.user) {
+    setSession(token, data.data.user)
+  }
+
+  return data.data as {
+    user: SessionUser
+    access: UserAccess
+  }
+}
+
+export interface AdminCoupon {
+  _id: string
+  code: string
+  description: string
+  maxUses: number
+  usedCount: number
+  expiresAt?: string | null
+  isActive: boolean
+  plan?: { _id: string; name: string; priceMonthly?: number }
+}
+
+export async function fetchAdminCoupons() {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch coupons'))
+  }
+
+  return data.data as AdminCoupon[]
+}
+
+export async function createCoupon(payload: {
+  code: string
+  description?: string
+  planId: string
+  maxUses?: number
+  expiresAt?: string
+}) {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to create coupon'))
+  }
+
+  return data.data as AdminCoupon
+}
+
+export async function deactivateCoupon(couponId: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/coupons/${couponId}`, {
+    method: 'DELETE',
+    headers: authHeaders(true),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to deactivate coupon'))
+  }
+
+  return data
 }
 
 export async function deleteDocument(documentId: string) {

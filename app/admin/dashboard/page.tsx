@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Users, LogOut, Loader2 } from 'lucide-react'
+import { FileText, Upload, Users, LogOut, Loader2, Ticket } from 'lucide-react'
 import { clearSession, fetchAdminStats } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card
             className="cursor-pointer transition-colors hover:border-primary/50"
             onClick={() => router.push('/admin/upload')}
@@ -115,6 +115,22 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="text-center">
               <Button variant="outline">View Users</Button>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="cursor-pointer transition-colors hover:border-primary/50"
+            onClick={() => router.push('/admin/coupons')}
+          >
+            <CardHeader className="text-center">
+              <Ticket className="mx-auto h-12 w-12 text-primary" />
+              <CardTitle>Manage Coupons</CardTitle>
+              <CardDescription>
+                Create codes for free paid-plan access
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button variant="outline">Manage Coupons</Button>
             </CardContent>
           </Card>
         </div>
