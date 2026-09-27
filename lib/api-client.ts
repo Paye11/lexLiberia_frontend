@@ -139,11 +139,26 @@ export function clearSession() {
   window.localStorage.removeItem(USER_KEY)
 }
 
-export async function askLegalResearch(question: string) {
+export async function askLegalResearch(question: string, attachment?: File) {
+  const headers: Record<string, string> = {}
+  const token = getStoredToken()
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  let body: BodyInit
+  if (attachment) {
+    const form = new FormData()
+    form.append('question', question)
+    form.append('attachment', attachment)
+    body = form
+  } else {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify({ question })
+  }
+
   const res = await fetch(`${API_BASE_URL}/ai/research`, {
     method: 'POST',
-    headers: authHeaders(true),
-    body: JSON.stringify({ question }),
+    headers,
+    body,
   })
 
   const data = await parseJsonSafe(res)

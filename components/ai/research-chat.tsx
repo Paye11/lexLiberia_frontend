@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowUp, BookOpen, Loader2, Lock, Scale, Sparkles, Globe } from 'lucide-react'
+import { ArrowUp, BookOpen, Loader2, Lock, Paperclip, Scale, Sparkles, Globe, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { ChatMessage } from '@/types'
 import { askLegalResearch, getAccessProfile, getStoredUser, type UserAccess } from '@/lib/api-client'
@@ -19,9 +19,12 @@ export function ResearchChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
+  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachmentError, setAttachmentError] = useState('')
   const [access, setAccess] = useState<UserAccess | null>(null)
   const [checkingAccess, setCheckingAccess] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function loadAccess() {
@@ -62,17 +65,45 @@ export function ResearchChat() {
     })
   }
 
+  function chooseAttachment(file: File | null) {
+    setAttachmentError('')
+    if (!file) {
+      setAttachment(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
+    const allowed = /\.(pdf|docx|jpe?g|png|webp|gif)$/i.test(file.name)
+    if (!allowed) {
+      setAttachment(null)
+      setAttachmentError('Upload a PDF, Word document, or an image of the pleading.')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setAttachment(null)
+      setAttachmentError('The file is larger than 10 MB.')
+      return
+    }
+
+    setAttachment(file)
+  }
+
   async function send(text: string) {
     const trimmed = text.trim()
     if (!trimmed || pending) return
 
+    const file = attachment
     const userMessage: ChatMessage = {
       id: `u-${Date.now()}`,
       role: 'user',
       content: trimmed,
+      attachmentName: file?.name,
     }
     setMessages((prev) => [...prev, userMessage])
     setInput('')
+    setAttachment(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     setPending(true)
     scrollToBottom()
 
@@ -83,7 +114,7 @@ export function ResearchChat() {
     ])
 
     try {
-      const result = await askLegalResearch(trimmed)
+      const result = await askLegalResearch(trimmed, file ?? undefined)
       setMessages((prev) =>
         prev.map((message) =>
           message.id === assistantId
@@ -204,6 +235,9 @@ export function ResearchChat() {
                     {m.role === 'user' ? (
                       <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">
                         {m.content}
+                        {m.attachmentName ? (
+                          <p className="mt-2 text-xs opacity-80">Attached: {m.attachmentName}</p>
+                        ) : null}
                       </div>
                     ) : (
                       <div className="max-w-[90%]">
@@ -294,8 +328,40 @@ export function ResearchChat() {
               e.preventDefault()
               send(input)
             }}
-            className="flex items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm focus-within:border-primary/50"
+            className="rounded-2xl border border-border bg-card p-2 shadow-sm focus-within:border-primary/50"
           >
+            {attachment ? (
+              <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-muted px-3 py-2 text-xs">
+                <span className="truncate">Attached: {attachment.name}</span>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Remove attachment"
+                  onClick={() => chooseAttachment(null)}
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ) : null}
+            <div className="flex items-end gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(event) => chooseAttachment(event.target.files?.[0] ?? null)}
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="size-9 rounded-xl"
+              disabled={pending}
+              aria-label="Attach a pleading"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="size-4" />
+            </Button>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -306,7 +372,7 @@ export function ResearchChat() {
                 }
               }}
               rows={1}
-              placeholder="Ask a legal question... The AI will search Liberian laws and the web!"
+              placeholder="Ask a question. You can attach a pleading or a photo of it."
               aria-label="Ask a legal question"
               className="max-h-40 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground"
             />
@@ -323,10 +389,13 @@ export function ResearchChat() {
                 <ArrowUp className="size-4" />
               )}
             </Button>
+            </div>
           </form>
+          {attachmentError ? (
+            <p className="mt-2 text-center text-xs text-destructive">{attachmentError}</p>
+          ) : null}
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            LexLiberia AI can make mistakes. Verify important information with the
-            official sources.
+            Attach a PDF, Word file, or photo up to 10 MB. LexLiberia AI can make mistakes. Verify important information with the official sources.
           </p>
         </div>
       </div>

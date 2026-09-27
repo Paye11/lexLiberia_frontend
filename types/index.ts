@@ -84,6 +84,7 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
+  attachmentName?: string
   citations?: ChatCitation[]
   webSearchUsed?: boolean
   webSources?: WebSource[]
