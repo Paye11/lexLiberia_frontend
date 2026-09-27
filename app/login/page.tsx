@@ -11,6 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+function nextPath(role?: string) {
+  const next = new URLSearchParams(window.location.search).get('next')
+  if (next && next.startsWith('/') && !next.startsWith('//')) return next
+  return role === 'admin' ? '/admin/dashboard' : '/'
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -25,7 +31,7 @@ export default function LoginPage() {
 
     try {
       const data = await login({ email, password })
-      router.push(data.user.role === 'admin' ? '/admin/dashboard' : '/')
+      router.push(nextPath(data.user.role))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
@@ -90,7 +96,7 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-border" />
             </div>
             <GoogleSignIn
-              onSuccess={(role) => router.push(role === 'admin' ? '/admin/dashboard' : '/')}
+              onSuccess={(role) => router.push(nextPath(role))}
               onError={setError}
             />
 

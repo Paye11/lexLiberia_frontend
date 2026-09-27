@@ -420,6 +420,84 @@ export async function openDocumentFile(documentId: string) {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+export interface MomoConfig {
+  mode: 'sandbox' | 'live'
+  currency: string
+  testPhone: string | null
+}
+
+export interface MomoPaymentState {
+  paymentId: string
+  status: 'pending' | 'completed' | 'failed' | 'refunded'
+  message: string
+  amountUsd: number
+  chargedAmount: string
+  currency: string
+  phone: string
+  billingCycle: 'monthly' | 'annual'
+  planName: string
+  mode: 'sandbox' | 'live'
+  user: SessionUser | null
+}
+
+export async function fetchMomoConfig() {
+  const res = await fetch(`${API_BASE_URL}/payments/momo/config`, {
+    cache: 'no-store',
+  })
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to load mobile money settings'))
+  }
+  return data.data as MomoConfig
+}
+
+export async function startMomoPayment(payload: {
+  planId: string
+  billingCycle: 'monthly' | 'annual'
+  phone: string
+}) {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in before you subscribe.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/payments/momo/request`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data?.paymentId) {
+    throw new Error(parseErrorMessage(data, 'Unable to start the Lonestar payment'))
+  }
+
+  return data.data as MomoPaymentState
+}
+
+export async function getMomoPaymentStatus(paymentId: string) {
+  const token = getStoredToken()
+  if (!token) {
+    throw new Error('Please log in before you subscribe.')
+  }
+
+  const res = await fetch(`${API_BASE_URL}/payments/momo/${paymentId}/status`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to check the Lonestar payment'))
+  }
+
+  const state = data.data as MomoPaymentState
+  if (state.user) {
+    setSession(token, state.user)
+  }
+  return state
+}
+
 export async function redeemCoupon(code: string) {
   const token = getStoredToken()
   if (!token) {

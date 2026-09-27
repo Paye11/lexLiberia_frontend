@@ -1,9 +1,13 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Check, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { SubscribeDialog } from '@/components/pricing/subscribe-dialog'
+import { getStoredToken } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import type { BillingCycle, Plan } from '@/types'
 
@@ -18,6 +22,15 @@ export function PricingCard({
 }) {
   const price = billing === 'monthly' ? plan.priceMonthly : plan.priceAnnual
   const isFree = price === 0
+  const [open, setOpen] = useState(false)
+
+  function handleSubscribe() {
+    if (!getStoredToken()) {
+      window.location.href = '/login?next=/pricing'
+      return
+    }
+    setOpen(true)
+  }
 
   return (
     <motion.div
@@ -53,12 +66,31 @@ export function PricingCard({
         )}
       </div>
 
-      <Button
-        className="mt-5 h-10"
-        variant={plan.recommended ? 'default' : 'outline'}
-      >
-        {isFree ? 'Get Started' : `Subscribe to ${plan.name}`}
-      </Button>
+      {isFree ? (
+        <Button
+          className="mt-5 h-10"
+          variant="outline"
+          render={<Link href="/register" />}
+        >
+          Get Started
+        </Button>
+      ) : (
+        <Button
+          className="mt-5 h-10"
+          variant={plan.recommended ? 'default' : 'outline'}
+          onClick={handleSubscribe}
+        >
+          Subscribe to {plan.name}
+        </Button>
+      )}
+
+      {open ? (
+        <SubscribeDialog
+          plan={plan}
+          billing={billing}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
 
       <ul className="mt-6 space-y-3">
         {plan.features.map((feature) => (
