@@ -174,6 +174,22 @@ export async function askLegalResearch(question: string, attachment?: File) {
   }
 }
 
+export async function loginWithGoogle(credential: string) {
+  const res = await fetch(`${API_BASE_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential }),
+  })
+
+  const data = (await parseJsonSafe(res)) as AuthResponse | null
+  if (!res.ok || !data?.token || !data.user) {
+    throw new Error(parseErrorMessage(data, 'Google sign-in failed'))
+  }
+
+  setSession(data.token, data.user)
+  return data
+}
+
 export async function login(payload: { email: string; password: string }) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {

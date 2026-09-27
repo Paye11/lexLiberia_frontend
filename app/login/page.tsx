@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, Mail } from 'lucide-react'
 import { login } from '@/lib/api-client'
+import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -82,6 +83,16 @@ export default function LoginPage() {
                 {loading ? 'Signing in...' : 'Login'}
               </Button>
             </form>
+
+            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleSignIn
+              onSuccess={(role) => router.push(role === 'admin' ? '/admin/dashboard' : '/')}
+              onError={setError}
+            />
 
             <p className="mt-4 text-center text-sm text-muted-foreground">
               New to LexLiberia?{' '}

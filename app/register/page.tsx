@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, Mail, User } from 'lucide-react'
 import { register } from '@/lib/api-client'
+import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -47,7 +48,7 @@ export default function RegisterPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <CardDescription>
-              Register to access paid plans, documents, and AI research.
+              Create a free account. Premium laws and AI research stay locked until you subscribe or redeem a coupon.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -117,6 +118,16 @@ export default function RegisterPage() {
                 {loading ? 'Creating account...' : 'Register'}
               </Button>
             </form>
+
+            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleSignIn
+              onSuccess={(role) => router.push(role === 'admin' ? '/admin/dashboard' : '/')}
+              onError={setError}
+            />
 
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{' '}
