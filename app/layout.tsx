@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
+import { NotificationOpen } from '@/components/pwa/notification-open'
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 const poppins = Poppins({
@@ -90,6 +91,7 @@ export default function RootLayout({
             <Footer />
           </div>
           <InstallPrompt />
+          <NotificationOpen />
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
