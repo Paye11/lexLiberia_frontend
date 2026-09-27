@@ -47,9 +47,12 @@ export interface UploadedDocument {
   fileAvailable?: boolean
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ??
-  'http://localhost:5000/api'
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api'
+)
+  .trim()
+  .replace(/\/+$/, '')
+  .replace(/\.+$/, '')
 
 const TOKEN_KEY = 'lexliberia_token'
 const USER_KEY = 'lexliberia_user'
@@ -134,6 +137,26 @@ export function clearSession() {
   if (!isBrowser()) return
   window.localStorage.removeItem(TOKEN_KEY)
   window.localStorage.removeItem(USER_KEY)
+}
+
+export async function askLegalResearch(question: string) {
+  const res = await fetch(`${API_BASE_URL}/ai/research`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({ question }),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data?.content) {
+    throw new Error(parseErrorMessage(data, 'Unable to complete legal research'))
+  }
+
+  return data.data as {
+    content: string
+    citations?: { title: string; citation: string; href: string }[]
+    webSearchUsed?: boolean
+    webSources?: { title: string; url: string }[]
+  }
 }
 
 export async function login(payload: { email: string; password: string }) {
@@ -234,17 +257,22 @@ export async function uploadDocument(payload: {
 }
 
 export async function fetchPlans() {
-  const res = await fetch(`${API_BASE_URL}/plans`, {
-    headers: { 'Content-Type': 'application/json' },
-    cache: 'no-store',
-  })
+  try {
+    const res = await fetch(`${API_BASE_URL}/plans`, {
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    })
 
-  const data = await parseJsonSafe(res)
-  if (!res.ok || !data?.data) {
-    throw new Error(parseErrorMessage(data, 'Unable to fetch plans'))
+    const data = await parseJsonSafe(res)
+    if (!res.ok || !data?.data) {
+      throw new Error(parseErrorMessage(data, 'Unable to fetch plans'))
+    }
+
+    return data.data
+  } catch (error) {
+    console.warn('[lexliberia] fetchPlans network error, let caller fall back:', error instanceof Error ? error.message : error)
+    throw error
   }
-
-  return data.data
 }
 
 export async function getMe() {
@@ -626,16 +654,20 @@ export interface AdminNotice extends PublicNotice {
 }
 
 export async function fetchPublicNotices() {
-  const res = await fetch(`${API_BASE_URL}/notices/public`, {
-    cache: 'no-store',
-  })
+  try {
+    const res = await fetch(`${API_BASE_URL}/notices/public`, {
+      cache: 'no-store',
+    })
 
-  const data = await parseJsonSafe(res)
-  if (!res.ok || !data?.data) {
+    const data = await parseJsonSafe(res)
+    if (!res.ok || !data?.data) {
+      return [] as PublicNotice[]
+    }
+
+    return data.data as PublicNotice[]
+  } catch {
     return [] as PublicNotice[]
   }
-
-  return data.data as PublicNotice[]
 }
 
 export async function fetchAdminNotices() {

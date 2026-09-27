@@ -6,8 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowUp, BookOpen, Loader2, Lock, Scale, Sparkles, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { ChatMessage } from '@/types'
-import { generateMockAnswer } from '@/lib/ai-mock'
-import { getAccessProfile, getStoredUser, type UserAccess } from '@/lib/api-client'
+import { askLegalResearch, getAccessProfile, getStoredUser, type UserAccess } from '@/lib/api-client'
 
 const suggestions = [
   'What are the grounds for divorce under Liberian law?',
@@ -77,34 +76,45 @@ export function ResearchChat() {
     setPending(true)
     scrollToBottom()
 
-    const { content, citations, webSearchUsed, webSources } = generateMockAnswer(trimmed)
     const assistantId = `a-${Date.now()}`
-
-    // Simulate streaming token-by-token.
-    await new Promise((r) => setTimeout(r, 500))
     setMessages((prev) => [
       ...prev,
-      { id: assistantId, role: 'assistant', content: '', webSearchUsed, webSources },
+      { id: assistantId, role: 'assistant', content: '' },
     ])
 
-    const words = content.split(' ')
-    for (let i = 0; i < words.length; i++) {
-      await new Promise((r) => setTimeout(r, 18))
+    try {
+      const result = await askLegalResearch(trimmed)
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, content: words.slice(0, i + 1).join(' ') }
-            : m,
+        prev.map((message) =>
+          message.id === assistantId
+            ? {
+                ...message,
+                content: result.content,
+                citations: result.citations,
+                webSearchUsed: result.webSearchUsed,
+                webSources: result.webSources,
+              }
+            : message,
         ),
       )
-      if (i % 6 === 0) scrollToBottom()
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantId
+            ? {
+                ...message,
+                content:
+                  error instanceof Error
+                    ? error.message
+                    : 'Unable to complete legal research.',
+              }
+            : message,
+        ),
+      )
+    } finally {
+      setPending(false)
+      scrollToBottom()
     }
-
-    setMessages((prev) =>
-      prev.map((m) => (m.id === assistantId ? { ...m, citations } : m)),
-    )
-    setPending(false)
-    scrollToBottom()
   }
 
   const hasConversation = messages.length > 0
@@ -207,7 +217,7 @@ export function ResearchChat() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-2 rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
+                        <div className="mt-2 whitespace-pre-wrap rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
                           {m.content || (
                             <Loader2 className="size-4 animate-spin text-muted-foreground" />
                           )}
