@@ -6,31 +6,45 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })
 
-self.addEventListener('fetch', () => {})
-
 self.addEventListener('push', (event) => {
-  let payload = {
-    title: 'Lonestar payment to confirm',
-    body: 'A subscriber sent a screenshot. Open it and compare it with your phone.',
+  const fallback = {
+    title: 'Payment to confirm',
+    body: 'A subscriber sent a Lonestar screenshot. Tap to open it.',
     url: '/admin/payments',
   }
+  let payload = fallback
   try {
-    payload = { ...payload, ...event.data.json() }
+    if (event.data) payload = { ...fallback, ...event.data.json() }
   } catch {
-    // keep the default message
+    payload = fallback
   }
 
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
       icon: '/icons/icon-192.png',
-      data: { url: payload.url },
+      badge: '/icons/icon-192.png',
+      tag: 'lexliberia-payment',
+      renotify: true,
+      requireInteraction: true,
+      data: { url: payload.url || '/admin/payments' },
     }),
   )
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url || '/admin/payments'
-  event.waitUntil(self.clients.openWindow(url))
+  const path = event.notification.data?.url || '/admin/payments'
+  const target = new URL(path, self.location.origin).href
+
+  event.waitUntil((async () => {
+    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    for (const client of windowClients) {
+      if ('navigate' in client) {
+        await client.navigate(target)
+      }
+      if ('focus' in client) return client.focus()
+    }
+    return self.clients.openWindow(target)
+  })())
 })

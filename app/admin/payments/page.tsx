@@ -114,8 +114,8 @@ export default function AdminPaymentsPage() {
       const background = await enableAdminPush()
       setAlertMessage(
         background
-          ? 'This phone will be alerted when a screenshot arrives, even if the app is closed.'
-          : 'Alerts are on while the admin app is open. After the server alert keys are saved, closed-app alerts will work too.',
+          ? 'This phone will show a notification with the payer’s name and amount, even when LexLiberia is closed.'
+          : 'The phone allowed alerts, but the server alert keys are missing. Add the VAPID keys on Render, then tap this button again.',
       )
     } catch (err) {
       setAlertMessage(err instanceof Error ? err.message : 'Unable to turn on alerts.')

@@ -566,39 +566,63 @@ export async function rejectPaymentProof(proofId: string) {
   return data
 }
 
-export async function enableAdminPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    throw new Error('This phone cannot receive app alerts.')
-  }
-  const permission = await Notification.requestPermission()
-  if (permission !== 'granted') {
-    throw new Error('Allow notifications so payment screenshots can alert this phone.')
+export type AdminPushStatus = 'ready' | 'needs-permission' | 'blocked' | 'unsupported' | 'server-missing'
+
+export async function syncAdminPush(requestPermission: boolean): Promise<AdminPushStatus> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    return 'unsupported'
   }
 
+  let permission = Notification.permission
+  if (permission === 'default' && requestPermission) {
+    permission = await Notification.requestPermission()
+  }
+  if (permission === 'denied') return 'blocked'
+  if (permission !== 'granted') return 'needs-permission'
+
   const registration = await navigator.serviceWorker.register('/sw.js')
+  await navigator.serviceWorker.ready
+
   const keyRes = await fetch(`${API_BASE_URL}/admin/push/public-key`, {
     headers: authHeaders(true),
+    cache: 'no-store',
   })
   const keyData = await parseJsonSafe(keyRes)
   const publicKey = keyData?.data?.publicKey
-  if (!keyRes.ok || !publicKey) {
-    return false
-  }
+  if (!keyRes.ok || !publicKey) return 'server-missing'
+
+  const existing = await registration.pushManager.getSubscription()
+  if (existing) await existing.unsubscribe()
 
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(publicKey),
   })
+
   const res = await fetch(`${API_BASE_URL}/admin/push/subscribe`, {
     method: 'POST',
     headers: authHeaders(true),
-    body: JSON.stringify({ subscription }),
+    body: JSON.stringify({ subscription: subscription.toJSON() }),
   })
-  const data = await parseJsonSafe(res)
   if (!res.ok) {
+    const data = await parseJsonSafe(res)
     throw new Error(parseErrorMessage(data, 'Unable to save phone alerts'))
   }
-  return true
+  return 'ready'
+}
+
+export async function enableAdminPush() {
+  const status = await syncAdminPush(true)
+  if (status === 'unsupported') {
+    throw new Error('This phone cannot receive app alerts. Open LexLiberia from the installed icon.')
+  }
+  if (status === 'blocked') {
+    throw new Error('Notifications are blocked. In the phone settings, allow notifications for LexLiberia, then open the app again.')
+  }
+  if (status === 'needs-permission') {
+    throw new Error('Tap Allow when the phone asks for notifications.')
+  }
+  return status === 'ready'
 }
 
 function urlBase64ToUint8Array(base64String: string) {

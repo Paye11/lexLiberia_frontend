@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { fetchPendingProofCount, getStoredToken, getStoredUser } from '@/lib/api-client'
+import { Button } from '@/components/ui/button'
+import {
+  fetchPendingProofCount,
+  getStoredToken,
+  getStoredUser,
+  syncAdminPush,
+  type AdminPushStatus,
+} from '@/lib/api-client'
 
 export default function AdminLayout({
   children,
@@ -12,6 +19,8 @@ export default function AdminLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [ready, setReady] = useState(false)
+  const [alertStatus, setAlertStatus] = useState<AdminPushStatus | ''>('')
+  const [alertError, setAlertError] = useState('')
 
   useEffect(() => {
     const token = getStoredToken()
@@ -32,9 +41,9 @@ export default function AdminLayout({
     const user = getStoredUser()
     if (!user || user.role !== 'admin') return
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
-    }
+    syncAdminPush(false)
+      .then(setAlertStatus)
+      .catch(() => setAlertStatus('needs-permission'))
 
     let lastCount = Number(window.sessionStorage.getItem('lexliberia_pending_proofs') || '-1')
     let stopped = false
@@ -72,5 +81,39 @@ export default function AdminLayout({
     return null
   }
 
-  return <>{children}</>
+  async function allowAlerts() {
+    setAlertError('')
+    try {
+      setAlertStatus(await syncAdminPush(true))
+    } catch (error) {
+      setAlertError(error instanceof Error ? error.message : 'Unable to turn on phone alerts.')
+    }
+  }
+
+  const showAlertBanner = pathname !== '/admin/login' && alertStatus && alertStatus !== 'ready'
+
+  return (
+    <>
+      {showAlertBanner ? (
+        <div className="border-b border-border bg-primary/10 px-4 py-3">
+          <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3">
+            <p className="text-sm">
+              {alertStatus === 'blocked'
+                ? 'Phone alerts are blocked. Allow notifications for LexLiberia in the phone settings, then open this app again.'
+                : alertStatus === 'server-missing'
+                  ? 'The server is not ready to send phone alerts yet. Add the VAPID keys on Render, then open this app again.'
+                  : alertStatus === 'unsupported'
+                    ? 'Open LexLiberia from the icon on your home screen, then allow notifications.'
+                    : 'Allow notifications so a payment screenshot appears on this phone even when the app is closed.'}
+            </p>
+            {alertStatus === 'needs-permission' ? (
+              <Button type="button" onClick={allowAlerts}>Allow phone alerts</Button>
+            ) : null}
+          </div>
+          {alertError ? <p className="mx-auto mt-2 max-w-3xl text-sm text-destructive">{alertError}</p> : null}
+        </div>
+      ) : null}
+      {children}
+    </>
+  )
 }
