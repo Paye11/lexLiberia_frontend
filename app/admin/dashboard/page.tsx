@@ -2,21 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Users, LogOut, Loader2, Ticket, Megaphone } from 'lucide-react'
-import { clearSession, fetchAdminStats } from '@/lib/api-client'
+import { FileText, Upload, Users, LogOut, Loader2, Ticket, Megaphone, Smartphone } from 'lucide-react'
+import { clearSession, fetchAdminStats, fetchPendingProofCount } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState({ documents: 0, users: 0, plans: 0 })
+  const [pendingPayments, setPendingPayments] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const data = await fetchAdminStats()
+        const [data, pending] = await Promise.all([
+          fetchAdminStats(),
+          fetchPendingProofCount().catch(() => 0),
+        ])
         setStats(data)
+        setPendingPayments(pending)
       } catch {
         setStats({ documents: 0, users: 0, plans: 0 })
       } finally {
@@ -70,6 +75,24 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+          <Card
+            className="cursor-pointer border-primary/40 transition-colors hover:border-primary"
+            onClick={() => router.push('/admin/payments')}
+          >
+            <CardHeader className="text-center">
+              <Smartphone className="mx-auto h-12 w-12 text-primary" />
+              <CardTitle>Confirm payments</CardTitle>
+              <CardDescription>
+                {pendingPayments === 1
+                  ? '1 screenshot is waiting'
+                  : `${pendingPayments} screenshots are waiting`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button>Open screenshots</Button>
+            </CardContent>
+          </Card>
+
           <Card
             className="cursor-pointer transition-colors hover:border-primary/50"
             onClick={() => router.push('/admin/upload')}

@@ -1,18 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  fetchMomoConfig,
-  getMomoPaymentStatus,
+  fetchMyPaymentProof,
+  fetchPayInstructions,
   getStoredToken,
-  startMomoPayment,
-  type MomoConfig,
-  type MomoPaymentState,
+  submitPaymentProof,
+  type PayInstructions,
+  type PaymentProof,
 } from '@/lib/api-client'
 import type { BillingCycle, Plan } from '@/types'
 
@@ -26,52 +24,29 @@ export function SubscribeDialog({
   onClose: () => void
 }) {
   const price = billing === 'monthly' ? plan.priceMonthly : plan.priceAnnual
-  const [phone, setPhone] = useState('')
-  const [config, setConfig] = useState<MomoConfig | null>(null)
-  const [state, setState] = useState<MomoPaymentState | null>(null)
+  const [instructions, setInstructions] = useState<PayInstructions | null>(null)
+  const [proof, setProof] = useState<PaymentProof | null>(null)
+  const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [timedOut, setTimedOut] = useState(false)
 
   useEffect(() => {
-    fetchMomoConfig()
-      .then(setConfig)
-      .catch(() => setConfig(null))
+    fetchPayInstructions().then(setInstructions).catch(() => setInstructions(null))
+    if (getStoredToken()) {
+      fetchMyPaymentProof().then(setProof).catch(() => setProof(null))
+    }
   }, [])
 
-  useEffect(() => {
-    if (!state || state.status !== 'pending') return
-
-    let stopped = false
-    const startedAt = Date.now()
-    const timer = window.setInterval(async () => {
-      if (Date.now() - startedAt > 120000) {
-        window.clearInterval(timer)
-        if (!stopped) {
-          setTimedOut(true)
-          setError('Still waiting for approval. If no prompt appeared, try again with the test number.')
-        }
-        return
-      }
-
-      try {
-        const next = await getMomoPaymentStatus(state.paymentId)
-        if (stopped) return
-        setState(next)
-        if (next.status !== 'pending') {
-          window.clearInterval(timer)
-        }
-      } catch (err) {
-        if (stopped) return
-        setError(err instanceof Error ? err.message : 'Unable to check the payment.')
-      }
-    }, 3000)
-
-    return () => {
-      stopped = true
-      window.clearInterval(timer)
+  async function copyNumber() {
+    if (!instructions?.phone) return
+    try {
+      await navigator.clipboard.writeText(instructions.phone)
+      setCopied(true)
+    } catch {
+      setCopied(false)
     }
-  }, [state?.paymentId, state?.status])
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -82,106 +57,107 @@ export function SubscribeDialog({
       return
     }
 
+    if (!file) {
+      setError('Choose the screenshot from your phone first.')
+      return
+    }
+
     setSubmitting(true)
-    setTimedOut(false)
     try {
-      const started = await startMomoPayment({
+      const saved = await submitPaymentProof({
         planId: plan.id,
         billingCycle: billing,
-        phone,
+        screenshot: file,
       })
-      setState(started)
+      setProof(saved)
+      setFile(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to start the payment.')
+      setError(err instanceof Error ? err.message : 'Unable to send the screenshot.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const waiting = state?.status === 'pending' && !timedOut
-  const succeeded = state?.status === 'completed'
-  const failed = state?.status === 'failed'
+  const waiting = proof?.status === 'pending'
+  const approved = proof?.status === 'approved'
+  const payName = instructions?.name || 'Bill P. Alex'
+  const payPhone = instructions?.phone || '0888907840'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/50 p-4 sm:items-center">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="subscribe-title"
-        className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
+        className="my-auto w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
       >
         <h2 id="subscribe-title" className="font-heading text-xl font-bold">
           Subscribe to {plan.name}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          ${price} / {billing === 'monthly' ? 'month' : 'year'}, collected with Lonestar mobile money.
+          Send ${price} for {billing === 'monthly' ? 'one month' : 'one year'}. The plan opens after the admin confirms your screenshot.
         </p>
 
-        {succeeded ? (
-          <div className="mt-5 space-y-4">
-            <p className="text-sm text-success">{state.message}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button render={<Link href="/account" />}>View account</Button>
-              <Button variant="outline" render={<Link href="/ai-research" />}>
-                Open AI Research
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor={`phone-${plan.id}`}>Lonestar number</Label>
-              <Input
-                id={`phone-${plan.id}`}
-                autoFocus
-                inputMode="tel"
-                autoComplete="tel"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder={config?.mode === 'sandbox' ? config.testPhone || '56733123453' : '0886123456'}
-                disabled={waiting || submitting}
-                required
-              />
-            </div>
+        <div className="mt-5 rounded-xl border border-border bg-muted/40 p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Send Lonestar money to</p>
+          <p className="mt-1 font-heading text-lg font-bold">{payName}</p>
+          <p className="mt-1 font-mono text-2xl font-bold tracking-wide">{payPhone}</p>
+          <Button type="button" variant="outline" className="mt-3" onClick={copyNumber}>
+            {copied ? 'Number copied' : 'Copy number'}
+          </Button>
+        </div>
 
-            {config?.mode === 'sandbox' ? (
-              <p className="text-sm text-muted-foreground">
-                This is a test payment. No real money moves. Enter{' '}
-                <span className="font-medium text-foreground">{config.testPhone}</span>{' '}
-                and MTN will approve it. Your real Lonestar number starts working after MTN turns on live collections.
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                A prompt will appear on that phone. The plan turns on only after you approve it.
-              </p>
-            )}
+        <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+          <li>Open Lonestar on your phone and send ${price} to {payPhone}.</li>
+          <li>Take a screenshot of the sent message.</li>
+          <li>Upload that screenshot here. The plan stays locked until the admin confirms it.</li>
+        </ol>
 
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            {approved ? (
+              <p className="text-sm text-success">
+                Your last screenshot was confirmed. Send a new one only if you are paying for another period.
+              </p>
+            ) : null}
             {waiting ? (
-              <p className="flex items-center gap-2 text-sm">
-                <Loader2 className="size-4 animate-spin" />
-                {state.message} Keep this window open.
+              <p className="text-sm">
+                Your screenshot is waiting. You can send a new one if the first was unclear.
+              </p>
+            ) : null}
+            {proof?.status === 'rejected' ? (
+              <p className="text-sm text-destructive">
+                {proof.reviewNote || 'The last screenshot was not confirmed. Send the Lonestar message again.'}
               </p>
             ) : null}
 
-            {failed ? <p className="text-sm text-destructive">{state.message}</p> : null}
+            <div className="space-y-2">
+              <Label htmlFor={`shot-${plan.id}`}>Screenshot of the Lonestar message</Label>
+              <input
+                id={`shot-${plan.id}`}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="block w-full text-sm"
+                onChange={(event) => setFile(event.target.files?.[0] || null)}
+              />
+            </div>
+
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
             <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={submitting || waiting}>
-                {submitting ? 'Sending...' : failed ? 'Try again' : 'Send payment request'}
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : waiting ? 'Send a new screenshot' : 'Send screenshot to admin'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
-                {waiting ? 'Close' : 'Cancel'}
+                Close
               </Button>
             </div>
           </form>
-        )}
-
-        {succeeded ? (
-          <Button type="button" variant="outline" className="mt-4" onClick={onClose}>
-            Close
-          </Button>
-        ) : null}
       </div>
     </div>
   )

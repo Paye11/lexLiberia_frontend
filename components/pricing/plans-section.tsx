@@ -61,7 +61,7 @@ export function PlansSection({
         </div>
 
         <p className="mx-auto mt-4 max-w-xl text-center text-sm text-muted-foreground">
-          Paid plans are collected with Lonestar mobile money. Coupon codes still work on your account page.
+          Send the plan price by Lonestar, then upload the screenshot. Coupon codes still work on your account page.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">

@@ -420,82 +420,183 @@ export async function openDocumentFile(documentId: string) {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-export interface MomoConfig {
-  mode: 'sandbox' | 'live'
-  currency: string
-  testPhone: string | null
-}
-
-export interface MomoPaymentState {
-  paymentId: string
-  status: 'pending' | 'completed' | 'failed' | 'refunded'
-  message: string
-  amountUsd: number
-  chargedAmount: string
-  currency: string
+export interface PayInstructions {
+  name: string
   phone: string
-  billingCycle: 'monthly' | 'annual'
-  planName: string
-  mode: 'sandbox' | 'live'
-  user: SessionUser | null
+  network: string
 }
 
-export async function fetchMomoConfig() {
-  const res = await fetch(`${API_BASE_URL}/payments/momo/config`, {
+export interface PaymentProof {
+  _id: string
+  status: 'pending' | 'approved' | 'rejected'
+  amount: number
+  billingCycle: 'monthly' | 'annual'
+  approvedBillingCycle?: 'monthly' | 'annual' | null
+  reviewNote: string
+  createdAt: string
+  updatedAt: string
+  reviewedAt?: string | null
+  user?: { _id: string; name: string; email: string }
+  plan?: { _id: string; name: string; priceMonthly?: number; priceAnnual?: number }
+  approvedPlan?: { _id: string; name: string } | null
+}
+
+export async function fetchPayInstructions() {
+  const res = await fetch(`${API_BASE_URL}/payments/instructions`, { cache: 'no-store' })
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to load payment details'))
+  }
+  return data.data as PayInstructions
+}
+
+export async function fetchMyPaymentProof() {
+  const token = getStoredToken()
+  if (!token) return null
+  const res = await fetch(`${API_BASE_URL}/payments/proof/mine`, {
+    headers: authHeaders(true),
     cache: 'no-store',
   })
   const data = await parseJsonSafe(res)
-  if (!res.ok || !data?.data) {
-    throw new Error(parseErrorMessage(data, 'Unable to load mobile money settings'))
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to load your payment'))
   }
-  return data.data as MomoConfig
+  return (data?.data || null) as PaymentProof | null
 }
 
-export async function startMomoPayment(payload: {
+export async function submitPaymentProof(payload: {
   planId: string
   billingCycle: 'monthly' | 'annual'
-  phone: string
+  screenshot: File
 }) {
   const token = getStoredToken()
   if (!token) {
     throw new Error('Please log in before you subscribe.')
   }
 
-  const res = await fetch(`${API_BASE_URL}/payments/momo/request`, {
+  const body = new FormData()
+  body.append('planId', payload.planId)
+  body.append('billingCycle', payload.billingCycle)
+  body.append('screenshot', payload.screenshot)
+
+  const res = await fetch(`${API_BASE_URL}/payments/proof`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body,
+  })
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to send the screenshot'))
+  }
+  return data.data as PaymentProof
+}
+
+export async function fetchPendingProofCount() {
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/count`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to check pending payments'))
+  }
+  return Number(data.data.count || 0)
+}
+
+export async function fetchPaymentProofs(status: 'pending' | 'approved' | 'rejected' = 'pending') {
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs?status=${status}`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to load payment screenshots'))
+  }
+  return data.data as PaymentProof[]
+}
+
+export async function fetchPaymentProofImage(proofId: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/${proofId}/screenshot`, {
+    headers: { Authorization: `Bearer ${getStoredToken()}` },
+    cache: 'no-store',
+  })
+  if (!res.ok) {
+    throw new Error('Unable to load the screenshot')
+  }
+  return URL.createObjectURL(await res.blob())
+}
+
+export async function approvePaymentProof(proofId: string, payload: {
+  planId: string
+  billingCycle: 'monthly' | 'annual'
+}) {
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/${proofId}/approve`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
   })
-
   const data = await parseJsonSafe(res)
-  if (!res.ok || !data?.data?.paymentId) {
-    throw new Error(parseErrorMessage(data, 'Unable to start the Lonestar payment'))
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to confirm this payment'))
   }
-
-  return data.data as MomoPaymentState
+  return data
 }
 
-export async function getMomoPaymentStatus(paymentId: string) {
-  const token = getStoredToken()
-  if (!token) {
-    throw new Error('Please log in before you subscribe.')
-  }
-
-  const res = await fetch(`${API_BASE_URL}/payments/momo/${paymentId}/status`, {
+export async function rejectPaymentProof(proofId: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/${proofId}/reject`, {
+    method: 'POST',
     headers: authHeaders(true),
-    cache: 'no-store',
+    body: JSON.stringify({}),
   })
-
   const data = await parseJsonSafe(res)
-  if (!res.ok || !data?.data) {
-    throw new Error(parseErrorMessage(data, 'Unable to check the Lonestar payment'))
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to reject this payment'))
+  }
+  return data
+}
+
+export async function enableAdminPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    throw new Error('This phone cannot receive app alerts.')
+  }
+  const permission = await Notification.requestPermission()
+  if (permission !== 'granted') {
+    throw new Error('Allow notifications so payment screenshots can alert this phone.')
   }
 
-  const state = data.data as MomoPaymentState
-  if (state.user) {
-    setSession(token, state.user)
+  const registration = await navigator.serviceWorker.register('/sw.js')
+  const keyRes = await fetch(`${API_BASE_URL}/admin/push/public-key`, {
+    headers: authHeaders(true),
+  })
+  const keyData = await parseJsonSafe(keyRes)
+  const publicKey = keyData?.data?.publicKey
+  if (!keyRes.ok || !publicKey) {
+    return false
   }
-  return state
+
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey),
+  })
+  const res = await fetch(`${API_BASE_URL}/admin/push/subscribe`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify({ subscription }),
+  })
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to save phone alerts'))
+  }
+  return true
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = window.atob(base64)
+  const output = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i += 1) output[i] = raw.charCodeAt(i)
+  return output
 }
 
 export async function redeemCoupon(code: string) {
