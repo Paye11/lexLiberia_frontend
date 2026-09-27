@@ -248,16 +248,27 @@ export async function uploadDocument(payload: {
   category: string
   file: File
 }) {
+  return uploadDocuments([payload])
+}
+
+export async function uploadDocuments(items: Array<{
+  title: string
+  description?: string
+  category: string
+  file: File
+}>) {
   const token = getStoredToken()
   if (!token) {
     throw new Error('Please log in as an admin first.')
   }
 
   const formData = new FormData()
-  formData.append('title', payload.title)
-  formData.append('description', payload.description)
-  formData.append('category', payload.category)
-  formData.append('file', payload.file)
+  formData.append('items', JSON.stringify(items.map((item) => ({
+    title: item.title,
+    description: item.description || item.title,
+    category: item.category,
+  }))))
+  items.forEach((item) => formData.append('files', item.file))
 
   try {
     const res = await fetch(`${API_BASE_URL}/documents`, {
