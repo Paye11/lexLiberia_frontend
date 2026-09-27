@@ -6,6 +6,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
+import { InstallPrompt } from '@/components/pwa/install-prompt'
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 const poppins = Poppins({
@@ -34,6 +35,19 @@ export const metadata: Metadata = {
     'legal research platform',
   ],
   generator: 'v0.app',
+  applicationName: 'LexLiberia',
+  appleWebApp: {
+    capable: true,
+    title: 'LexLiberia',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+  },
   openGraph: {
     title: 'LexLiberia — Research Liberian Laws with Confidence',
     description:
@@ -75,6 +89,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <InstallPrompt />
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
