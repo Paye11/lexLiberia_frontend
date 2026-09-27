@@ -7,6 +7,7 @@ import {
   fetchPendingProofCount,
   getStoredToken,
   getStoredUser,
+  sendTestAdminAlert,
   syncAdminPush,
   type AdminPushStatus,
 } from '@/lib/api-client'
@@ -84,7 +85,12 @@ export default function AdminLayout({
   async function allowAlerts() {
     setAlertError('')
     try {
-      setAlertStatus(await syncAdminPush(true))
+      const status = await syncAdminPush(true, true)
+      setAlertStatus(status)
+      if (status === 'ready') {
+        const test = await sendTestAdminAlert()
+        setAlertError(test.delivered > 0 ? '' : test.detail)
+      }
     } catch (error) {
       setAlertError(error instanceof Error ? error.message : 'Unable to turn on phone alerts.')
     }
@@ -101,7 +107,7 @@ export default function AdminLayout({
               {alertStatus === 'blocked'
                 ? 'Phone alerts are blocked. Allow notifications for LexLiberia in the phone settings, then open this app again.'
                 : alertStatus === 'server-missing'
-                  ? 'The server is not ready to send phone alerts yet. Add the VAPID keys on Render, then open this app again.'
+                  ? 'The backend is not reading VAPID_PUBLIC_KEY. On the Render backend service, add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT from backend/.env. The names must match exactly, with no quotes around the values.'
                   : alertStatus === 'unsupported'
                     ? 'Open LexLiberia from the icon on your home screen, then allow notifications.'
                     : 'Allow notifications so a payment screenshot appears on this phone even when the app is closed.'}

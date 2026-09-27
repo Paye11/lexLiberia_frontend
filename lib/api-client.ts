@@ -568,7 +568,7 @@ export async function rejectPaymentProof(proofId: string) {
 
 export type AdminPushStatus = 'ready' | 'needs-permission' | 'blocked' | 'unsupported' | 'server-missing'
 
-export async function syncAdminPush(requestPermission: boolean): Promise<AdminPushStatus> {
+export async function syncAdminPush(requestPermission: boolean, renew = false): Promise<AdminPushStatus> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
     return 'unsupported'
   }
@@ -591,13 +591,17 @@ export async function syncAdminPush(requestPermission: boolean): Promise<AdminPu
   const publicKey = keyData?.data?.publicKey
   if (!keyRes.ok || !publicKey) return 'server-missing'
 
-  const existing = await registration.pushManager.getSubscription()
-  if (existing) await existing.unsubscribe()
-
-  const subscription = await registration.pushManager.subscribe({
+  let subscription = await registration.pushManager.getSubscription()
+  if (subscription && renew) {
+    await subscription.unsubscribe()
+    subscription = null
+  }
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(publicKey),
-  })
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    })
+  }
 
   const res = await fetch(`${API_BASE_URL}/admin/push/subscribe`, {
     method: 'POST',
@@ -611,8 +615,20 @@ export async function syncAdminPush(requestPermission: boolean): Promise<AdminPu
   return 'ready'
 }
 
+export async function sendTestAdminAlert() {
+  const res = await fetch(`${API_BASE_URL}/admin/push/test`, {
+    method: 'POST',
+    headers: authHeaders(true),
+  })
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to send a test alert'))
+  }
+  return data.data as { configured: boolean; targeted: number; delivered: number; detail: string }
+}
+
 export async function enableAdminPush() {
-  const status = await syncAdminPush(true)
+  const status = await syncAdminPush(true, true)
   if (status === 'unsupported') {
     throw new Error('This phone cannot receive app alerts. Open LexLiberia from the installed icon.')
   }
