@@ -7,6 +7,7 @@ import { ArrowUp, BookOpen, Loader2, Lock, Paperclip, Scale, Sparkles, Globe, X 
 import { Button } from '@/components/ui/button'
 import type { ChatMessage } from '@/types'
 import { askLegalResearch, getAccessProfile, getStoredUser, type UserAccess } from '@/lib/api-client'
+import { MarkdownView } from '@/lib/markdown'
 
 const defaultSuggestions = [
   'What are the grounds for divorce under Liberian law?',
@@ -268,8 +269,10 @@ export function ResearchChat({
                             </span>
                           )}
                         </div>
-                        <div className="mt-2 whitespace-pre-wrap rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-3 text-sm leading-relaxed text-foreground">
-                          {m.content || (
+                        <div className="mt-2 rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-4 text-sm leading-relaxed text-foreground">
+                          {m.content ? (
+                            <MarkdownView source={m.content} className="prose-ai" />
+                          ) : (
                             <Loader2 className="size-4 animate-spin text-muted-foreground" />
                           )}
                           
