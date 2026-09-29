@@ -5,10 +5,17 @@ import { ArrowLeft, CalendarDays, Gavel, Scale } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { legalService } from '@/services/legal-service'
-import { opinions } from '@/lib/mock-data'
+
+export const dynamicParams = true
 
 export async function generateStaticParams() {
-  return opinions.map((o) => ({ id: o.id }))
+  try {
+    const opinions = await legalService.getOpinions()
+    return opinions.map((o) => ({ id: o.id }))
+  } catch (error) {
+    console.warn('[opinions/generateStaticParams] falling back to empty:', error instanceof Error ? error.message : error)
+    return []
+  }
 }
 
 export async function generateMetadata({

@@ -98,9 +98,17 @@ export function GoogleSignIn({ onSuccess, onError }: GoogleSignInProps) {
   }, [clientId])
 
   if (!clientId) {
+    if (typeof window !== 'undefined') {
+      console.warn(
+        '[GoogleSignIn] NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured. Google sign-in button is disabled. ' +
+          'Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to your .env.local file to enable Google Sign-In.',
+      )
+    }
     return (
       <p className="text-center text-sm text-muted-foreground">
-        Google sign-in will appear after the Google client ID is added.
+        Google sign-in is disabled. Configure{' '}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>{' '}
+        to enable it.
       </p>
     )
   }

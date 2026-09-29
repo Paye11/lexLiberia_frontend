@@ -25,11 +25,15 @@ import type {
  * defined, requests are made against `${API_BASE_URL}/<resource>`. When it is
  * not defined, the functions fall back to local mock data so the UI is fully
  * functional during development.
+ *
+ * NOTE: API_BASE_URL is intentionally aligned with lib/api-client.ts. Both
+ * default to 'http://localhost:5000/api' when the env var is missing so that
+ * login/register flows never silently differ from marketing-page flows.
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+const _RAW_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api'
+const API_BASE_URL = _RAW_URL.trim().replace(/\/+$/, '').replace(/\.+$/, '')
 
 async function fetchJson<T>(path: string, fallback: T): Promise<T> {
-  if (!API_BASE_URL) return fallback
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       headers: { 'Content-Type': 'application/json' },
@@ -38,7 +42,10 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
     if (!res.ok) throw new Error(`Request failed: ${res.status}`)
     return (await res.json()) as T
   } catch (error) {
-    console.error(`[v0] legal-service fetch failed for ${path}:`, error)
+    console.warn(
+      `[legal-service] fetch failed for ${path} (${API_BASE_URL}${path}); falling back to mock data.`,
+      error instanceof Error ? error.message : error,
+    )
     return fallback
   }
 }

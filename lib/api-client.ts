@@ -109,6 +109,30 @@ function toFriendlyNetworkError(error: unknown, fallback: string) {
   return fallback
 }
 
+function writeCookie(name: string, value: string, days: number) {
+  if (!isBrowser()) return
+  try {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()
+    const secure =
+      typeof window !== 'undefined' && window.location.protocol === 'https:'
+        ? ' Secure;'
+        : ''
+    const encoded = encodeURIComponent(value)
+    document.cookie = `${name}=${encoded}; path=/; SameSite=Lax; expires=${expires};${secure}`
+  } catch {
+    // Silently ignore cookie failures (e.g. strict browser privacy settings)
+  }
+}
+
+function deleteCookie(name: string) {
+  if (!isBrowser()) return
+  try {
+    document.cookie = `${name}=; path=/; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 GMT;`
+  } catch {
+    // Silently ignore
+  }
+}
+
 export function getStoredToken() {
   if (!isBrowser()) return null
   return window.localStorage.getItem(TOKEN_KEY)
@@ -131,12 +155,19 @@ export function setSession(token: string, user: SessionUser) {
   if (!isBrowser()) return
   window.localStorage.setItem(TOKEN_KEY, token)
   window.localStorage.setItem(USER_KEY, JSON.stringify(user))
+  // Also write cookies so Next.js middleware can see them on the server
+  // (they are NOT used for auth - only for the middleware route gate; the
+  // JWT passed via Authorization header is the authoritative credential).
+  writeCookie(TOKEN_KEY, token, 30)
+  writeCookie(USER_KEY, JSON.stringify(user), 30)
 }
 
 export function clearSession() {
   if (!isBrowser()) return
   window.localStorage.removeItem(TOKEN_KEY)
   window.localStorage.removeItem(USER_KEY)
+  deleteCookie(TOKEN_KEY)
+  deleteCookie(USER_KEY)
 }
 
 export async function askLegalResearch(question: string, attachment?: File) {

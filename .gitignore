@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Backend lives in its own git repo (lexLiberia_backend)
+/backend/
+
 # dependencies
 /node_modules
 
