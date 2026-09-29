@@ -18,6 +18,7 @@ const navItems = [
   { label: 'Opinions', href: '/opinions' },
   { label: 'Categories', href: '/#categories' },
   { label: 'AI Research', href: '/ai-research' },
+  { label: 'Ask Me', href: '/ask-me' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },

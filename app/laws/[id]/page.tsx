@@ -116,13 +116,13 @@ export default async function LawDetailPage({
               Need deeper analysis?
             </h3>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Use our AI Legal Research assistant to ask questions about this
-              statute and find related case law.
+              Ask AI Research or Ask Me about this statute and related case law.
+              Both assistants are included with a paid plan.
             </p>
-            <Button
-              className="mt-4"
-              render={<Link href="/ai-research">Ask the AI Assistant</Link>}
-            />
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button render={<Link href="/ai-research">AI Research</Link>} />
+              <Button variant="outline" render={<Link href="/ask-me">Ask Me</Link>} />
+            </div>
           </div>
         </article>
     </>

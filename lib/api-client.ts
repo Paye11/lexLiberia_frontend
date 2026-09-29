@@ -174,6 +174,41 @@ export async function askLegalResearch(question: string, attachment?: File) {
   }
 }
 
+export async function askMe(question: string, attachment?: File) {
+  const headers: Record<string, string> = {}
+  const token = getStoredToken()
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  let body: BodyInit
+  if (attachment) {
+    const form = new FormData()
+    form.append('question', question)
+    form.append('attachment', attachment)
+    body = form
+  } else {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify({ question })
+  }
+
+  const res = await fetch(`${API_BASE_URL}/ai/ask`, {
+    method: 'POST',
+    headers,
+    body,
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data?.content) {
+    throw new Error(parseErrorMessage(data, 'Unable to complete the Ask Me search'))
+  }
+
+  return data.data as {
+    content: string
+    citations?: { title: string; citation: string; href: string }[]
+    webSearchUsed?: boolean
+    webSources?: { title: string; url: string }[]
+  }
+}
+
 export async function loginWithGoogle(credential: string) {
   const res = await fetch(`${API_BASE_URL}/auth/google`, {
     method: 'POST',

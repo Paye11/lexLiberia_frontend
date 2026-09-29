@@ -385,7 +385,7 @@ export const plans: Plan[] = [
       'Unlimited document views',
       'Supreme Court opinions access',
       'Bookmarks & downloads',
-      '50 AI research queries / month',
+      'AI Research and Ask Me',
     ],
   },
   {
@@ -398,7 +398,7 @@ export const plans: Plan[] = [
     features: [
       'Everything in Student',
       'Advanced filters & citations',
-      'Unlimited AI legal research',
+      'Unlimited AI Research and Ask Me',
       'Related cases & cross-references',
       'PDF export & print',
       'Priority support',
@@ -432,9 +432,9 @@ export const faqs: FaqItem[] = [
       'Our library is compiled from official gazettes, the Liberian Code of Laws Revised, and Supreme Court records, and is updated regularly as new materials are published.',
   },
   {
-    question: 'How accurate is the AI legal research assistant?',
+    question: 'How accurate are AI Research and Ask Me?',
     answer:
-      'The assistant uses retrieval-augmented generation grounded in our verified legal library and always cites primary sources so you can verify every answer.',
+      'Both assistants search laws on LexLiberia, Liberian judiciary sources, and the wider web, and they cite sources so you can verify every answer.',
   },
   {
     question: 'Do you offer discounts for institutions?',

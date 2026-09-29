@@ -153,8 +153,8 @@ export default function AboutPage() {
                 Join us in opening up Liberian law
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-primary-foreground/80 text-pretty">
-                Create a free account to start searching statutes, reading
-                opinions, and asking our AI research assistant.
+                Create a free account to start searching statutes and reading
+                opinions. Paid plans add AI Research and Ask Me.
               </p>
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Button

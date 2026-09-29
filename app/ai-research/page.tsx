@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 }
 
 export default function AiResearchPage() {
-  return <ResearchChat />
+  return (
+    <ResearchChat
+      otherAssistant={{ href: '/ask-me', label: 'Or open Ask Me' }}
+    />
+  )
 }

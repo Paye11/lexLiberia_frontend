@@ -6,6 +6,7 @@ const quickLinks = [
   { label: 'Laws', href: '/laws' },
   { label: 'Supreme Court Opinions', href: '/opinions' },
   { label: 'AI Legal Research', href: '/ai-research' },
+  { label: 'Ask Me', href: '/ask-me' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'About', href: '/about' },
 ]

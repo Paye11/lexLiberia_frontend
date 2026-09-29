@@ -28,7 +28,7 @@ export default async function PricingPage() {
             </h1>
             <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
               Start free and upgrade as your research needs grow. All paid plans
-              include AI research, full-text search, and citation tools.
+              include AI Research, Ask Me, full-text search, and citation tools.
             </p>
           </div>
         </section>

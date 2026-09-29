@@ -8,14 +8,30 @@ import { Button } from '@/components/ui/button'
 import type { ChatMessage } from '@/types'
 import { askLegalResearch, getAccessProfile, getStoredUser, type UserAccess } from '@/lib/api-client'
 
-const suggestions = [
+const defaultSuggestions = [
   'What are the grounds for divorce under Liberian law?',
   'Explain the penalties for theft under the Penal Law.',
   'What rights does the 1986 Constitution guarantee?',
   'How is a commercial contract enforced in Liberia?',
 ]
 
-export function ResearchChat() {
+export function ResearchChat({
+  assistantName = 'LexLiberia AI',
+  title = 'AI Legal Research Assistant',
+  description = 'Ask questions in plain language. The assistant searches Liberian statutes, Supreme Court opinions, and legal resources on the web, providing answers with citations and judgment formats. Always verify with the primary sources before relying on any answer.',
+  lockedTitle = 'AI Research requires a paid plan',
+  suggestions = defaultSuggestions,
+  ask = askLegalResearch,
+  otherAssistant,
+}: {
+  assistantName?: string
+  title?: string
+  description?: string
+  lockedTitle?: string
+  suggestions?: string[]
+  ask?: typeof askLegalResearch
+  otherAssistant?: { href: string; label: string }
+} = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
@@ -114,7 +130,7 @@ export function ResearchChat() {
     ])
 
     try {
-      const result = await askLegalResearch(trimmed, file ?? undefined)
+      const result = await ask(trimmed, file ?? undefined)
       setMessages((prev) =>
         prev.map((message) =>
           message.id === assistantId
@@ -165,7 +181,7 @@ export function ResearchChat() {
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Lock className="size-7" />
           </div>
-          <h1 className="mt-6 font-heading text-2xl font-bold">AI Research requires a paid plan</h1>
+          <h1 className="mt-6 font-heading text-2xl font-bold">{lockedTitle}</h1>
           <p className="mt-3 text-muted-foreground">
             Upgrade your account or redeem an admin coupon to unlock AI legal research and premium document access.
           </p>
@@ -197,15 +213,16 @@ export function ResearchChat() {
                 <Sparkles className="size-7" />
               </div>
               <h1 className="mt-5 font-heading text-2xl font-bold text-foreground text-balance sm:text-3xl">
-                AI Legal Research Assistant
+                {title}
               </h1>
               <p className="mt-3 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground">
-                Ask questions in plain language. The assistant searches Liberian
-                statutes, Supreme Court opinions, and legal resources on the web, 
-                providing answers with citations and judgment formats.
-                Always verify with the primary sources before relying on any
-                answer.
+                {description}
               </p>
+              {otherAssistant ? (
+                <Link href={otherAssistant.href} className="mt-4 text-sm text-primary hover:underline">
+                  {otherAssistant.label}
+                </Link>
+              ) : null}
               <div className="mt-8 grid w-full gap-3 sm:grid-cols-2">
                 {suggestions.map((s) => (
                   <button
@@ -243,7 +260,7 @@ export function ResearchChat() {
                       <div className="max-w-[90%]">
                         <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                           <Sparkles className="size-3.5 text-secondary" />
-                          LexLiberia AI
+                          {assistantName}
                           {m.webSearchUsed && (
                             <span className="flex items-center gap-1 text-primary">
                               <Globe className="size-3" />
