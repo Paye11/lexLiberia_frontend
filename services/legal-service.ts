@@ -50,46 +50,67 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
   }
 }
 
+function sanitizeArray<T, U extends readonly T[]>(value: unknown, fallback: U): T[] {
+  return Array.isArray(value) ? (value as T[]) : (fallback as T[])
+}
+
 export const legalService = {
-  getCategories: () => fetchJson<Category[]>('/categories', categories),
-  getLaws: () => fetchJson<Law[]>('/laws', laws),
+  getCategories: () =>
+    fetchJson<Category[]>('/categories', categories)
+      .catch(() => categories)
+      .then((data) => sanitizeArray<Category, typeof categories>(data, categories)),
+  getLaws: () =>
+    fetchJson<Law[]>('/laws', laws)
+      .catch(() => laws)
+      .then((data) => sanitizeArray<Law, typeof laws>(data, laws)),
   getLawById: (id: string) =>
-    fetchJson<Law | undefined>(`/laws/${id}`, laws.find((l) => l.id === id)),
-  getOpinions: () => fetchJson<Opinion[]>('/opinions', opinions),
+    fetchJson<Law | undefined>(`/laws/${id}`, laws.find((l) => l.id === id)).catch(
+      () => laws.find((l) => l.id === id),
+    ),
+  getOpinions: () =>
+    fetchJson<Opinion[]>('/opinions', opinions)
+      .catch(() => opinions)
+      .then((data) => sanitizeArray<Opinion, typeof opinions>(data, opinions)),
   getOpinionById: (id: string) =>
     fetchJson<Opinion | undefined>(
       `/opinions/${id}`,
       opinions.find((o) => o.id === id),
-    ),
-  getLegalUpdates: () => fetchJson<LegalUpdate[]>('/updates', legalUpdates),
+    ).catch(() => opinions.find((o) => o.id === id)),
+  getLegalUpdates: () =>
+    fetchJson<LegalUpdate[]>('/updates', legalUpdates)
+      .catch(() => legalUpdates)
+      .then((data) => sanitizeArray<LegalUpdate, typeof legalUpdates>(data, legalUpdates)),
   getTestimonials: () =>
-    fetchJson<Testimonial[]>('/testimonials', testimonials),
+    fetchJson<Testimonial[]>('/testimonials', testimonials)
+      .catch(() => testimonials)
+      .then((data) =>
+        sanitizeArray<Testimonial, typeof testimonials>(data, testimonials),
+      ),
   async getPlans() {
-    if (!API_BASE_URL) {
-      return plans
-    }
-
     try {
-      const planData = await fetchPlans()
-      if (!Array.isArray(planData) || planData.length === 0) {
-        return plans
-      }
-
-      return planData.map((plan: Record<string, unknown>) => ({
-        id: String(plan._id ?? plan.id ?? ''),
-        name: String(plan.name ?? ''),
-        description: String(plan.description ?? ''),
-        priceMonthly: Number(plan.priceMonthly ?? 0),
-        priceAnnual: Number(plan.priceAnnual ?? 0),
-        recommended: Boolean(plan.recommended),
-        features: Array.isArray(plan.features)
-          ? plan.features.map((feature) => String(feature))
-          : [],
-      })) satisfies Plan[]
+      const planData = !API_BASE_URL ? null : await fetchPlans().catch(() => null)
+      const list = Array.isArray(planData) && planData.length > 0 ? planData : plans
+      return sanitizeArray<Plan, typeof plans>(
+        list.map((plan: Record<string, unknown>) => ({
+          id: String(plan._id ?? plan.id ?? ''),
+          name: String(plan.name ?? ''),
+          description: String(plan.description ?? ''),
+          priceMonthly: Number(plan.priceMonthly ?? 0),
+          priceAnnual: Number(plan.priceAnnual ?? 0),
+          recommended: Boolean(plan.recommended),
+          features: Array.isArray(plan.features)
+            ? plan.features.map((feature) => String(feature))
+            : [],
+        })),
+        plans,
+      )
     } catch (error) {
       console.error('[lexliberia] failed to fetch plans from backend:', error)
       return plans
     }
   },
-  getFaqs: () => fetchJson<FaqItem[]>('/faqs', faqs),
+  getFaqs: () =>
+    fetchJson<FaqItem[]>('/faqs', faqs)
+      .catch(() => faqs)
+      .then((data) => sanitizeArray<FaqItem, typeof faqs>(data, faqs)),
 }

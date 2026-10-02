@@ -3,6 +3,7 @@ import { PlansSection } from '@/components/pricing/plans-section'
 import { FaqAccordion } from '@/components/faq-accordion'
 import { SectionHeading } from '@/components/section-heading'
 import { legalService } from '@/services/legal-service'
+import { faqs as fallbackFaqs, plans as fallbackPlans } from '@/lib/mock-data'
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -10,10 +11,14 @@ export const metadata: Metadata = {
     'Simple, transparent pricing for legal professionals, students, and institutions. Choose the LexLiberia plan that fits your needs.',
 }
 
+function ensureArray<T>(value: unknown, fallback: readonly T[]): T[] {
+  return Array.isArray(value) ? (value as T[]) : (fallback as T[])
+}
+
 export default async function PricingPage() {
   const [plans, faqs] = await Promise.all([
-    legalService.getPlans(),
-    legalService.getFaqs(),
+    legalService.getPlans().catch(() => fallbackPlans),
+    legalService.getFaqs().catch(() => fallbackFaqs),
   ])
 
   return (
@@ -33,7 +38,7 @@ export default async function PricingPage() {
           </div>
         </section>
 
-        <PlansSection plans={plans} showHeading={false} />
+        <PlansSection plans={ensureArray(plans, fallbackPlans)} showHeading={false} />
 
         <section className="border-t border-border bg-muted/30 py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -44,7 +49,7 @@ export default async function PricingPage() {
               align="center"
             />
             <div className="mt-10">
-              <FaqAccordion items={faqs} />
+              <FaqAccordion items={ensureArray(faqs, fallbackFaqs)} />
             </div>
           </div>
         </section>
