@@ -5,11 +5,16 @@ const ADMIN_LOGIN = '/admin/login'
 const PUBLIC_PAGE_LOGIN = '/login'
 
 const _RAW_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api'
-const API_BASE_URL = _RAW_URL
-  .trim()
-  .replace(/\/+$/, '')
-  .replace(/\.+$/, '')
+  process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  'http://localhost:5000/api'
+const API_BASE_URL = (() => {
+  const trimmed = _RAW_URL.trim().replace(/\/+$/, '').replace(/\.+$/, '')
+  if (trimmed.startsWith('/')) {
+    return 'http://localhost:5000/api'
+  }
+  return trimmed
+})()
 
 const TOKEN_KEY = 'lexliberia_token'
 const USER_KEY = 'lexliberia_user'
