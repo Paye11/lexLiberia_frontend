@@ -1,15 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, FileText, X, ArrowLeft } from 'lucide-react'
-import { uploadDocuments } from '@/lib/api-client'
+import { Upload, FileText, X, ArrowLeft, RefreshCw } from 'lucide-react'
+import { fetchCategories, uploadDocuments, type AdminCategory } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-const CATEGORIES = [
+const FALLBACK_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: 'constitution', label: 'Constitution' },
   { value: 'civil-procedure', label: 'Civil Procedure Law' },
   { value: 'criminal-procedure', label: 'Criminal Procedure Law' },
@@ -26,6 +26,25 @@ const CATEGORIES = [
   { value: 'executive-orders', label: 'Executive Orders' },
 ]
 
+function buildCategoryList(
+  rows: AdminCategory[],
+): Array<{ value: string; label: string; isActive: boolean }> {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return FALLBACK_CATEGORIES.map((row) => ({ ...row, isActive: true }))
+  }
+  const sorted = [...rows].sort((a, b) => {
+    const oA = typeof a.order === 'number' ? a.order : 0
+    const oB = typeof b.order === 'number' ? b.order : 0
+    if (oA !== oB) return oA - oB
+    return String(a.name || '').localeCompare(String(b.name || ''))
+  })
+  return sorted.map((row) => ({
+    value: row.slug,
+    label: row.name,
+    isActive: row.isActive !== false,
+  }))
+}
+
 type PendingUpload = {
   id: string
   file: File
@@ -40,9 +59,30 @@ function titleFromFile(file: File) {
 export default function AdminUploadPage() {
   const router = useRouter()
   const [pending, setPending] = useState<PendingUpload[]>([])
+  const [categories, setCategories] = useState<AdminCategory[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  async function loadCategories() {
+    setError('')
+    try {
+      setLoadingCategories(true)
+      const rows = await fetchCategories(false)
+      setCategories(rows)
+    } catch (err) {
+      setCategories([])
+    } finally {
+      setLoadingCategories(false)
+    }
+  }
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  const categoryList = buildCategoryList(categories)
 
   function addFiles(list: FileList | null) {
     if (!list?.length) return
@@ -57,7 +97,7 @@ export default function AdminUploadPage() {
         id: `${file.name}-${file.size}-${file.lastModified}`,
         file,
         title: titleFromFile(file),
-        category: '',
+        category: categoryList[0]?.value ?? '',
       })
     })
     if (next.length) {
@@ -101,15 +141,27 @@ export default function AdminUploadPage() {
   return (
     <section className="py-20">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center">
-          <Button variant="ghost" onClick={() => router.push('/admin/dashboard')} className="mr-4">
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <Button variant="ghost" onClick={() => router.push('/admin/dashboard')} className="mr-2">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="font-heading text-3xl font-bold">Upload Documents</h1>
-            <p className="mt-2 text-muted-foreground">Add several PDF or Word files, then choose a category for each one.</p>
+            <p className="mt-2 text-muted-foreground">
+              Add several PDF or Word files, then choose a category for each one.
+              Categories are managed on the Admin dashboard → Categories page.
+            </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadCategories}
+            disabled={loadingCategories}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${loadingCategories ? 'animate-spin' : ''}`} />
+            Refresh categories
+          </Button>
         </div>
 
         <Card>
@@ -146,7 +198,10 @@ export default function AdminUploadPage() {
 
               {pending.length > 0 ? (
                 <div className="space-y-4">
-                  <p className="text-sm font-medium">Choose a category for each file</p>
+                  <p className="text-sm font-medium">
+                    Choose a category for each file
+                    {loadingCategories ? ' (Loading categories...)' : ''}
+                  </p>
                   {pending.map((item) => (
                     <div key={item.id} className="space-y-3 rounded-lg border border-border p-4">
                       <div className="flex items-center justify-between gap-3">
@@ -179,13 +234,20 @@ export default function AdminUploadPage() {
                             id={`category-${item.id}`}
                             value={item.category}
                             onChange={(event) => updateItem(item.id, { category: event.target.value })}
-                            className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                            className="flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-60"
+                            disabled={loadingCategories}
                             required
                           >
-                            <option value="">Select a category</option>
-                            {CATEGORIES.map((category) => (
-                              <option key={category.value} value={category.value}>
-                                {category.label}
+                            <option value="">
+                              {loadingCategories ? 'Loading categories...' : 'Select a category'}
+                            </option>
+                            {categoryList.map((cat) => (
+                              <option
+                                key={cat.value}
+                                value={cat.value}
+                                disabled={!cat.isActive}
+                              >
+                                {cat.label}{cat.isActive ? '' : '  (hidden)'}
                               </option>
                             ))}
                           </select>

@@ -38,6 +38,7 @@ export interface UploadedDocument {
   title: string
   description: string
   category: string
+  categoryId?: string | null
   filePath?: string
   fileType: string
   fileSize: number
@@ -836,6 +837,121 @@ export async function deactivateCoupon(couponId: string) {
   const data = await parseJsonSafe(res)
   if (!res.ok) {
     throw new Error(parseErrorMessage(data, 'Unable to deactivate coupon'))
+  }
+
+  return data
+}
+
+export interface AdminCategory {
+  _id: string
+  name: string
+  slug: string
+  description: string
+  order: number
+  isActive: boolean
+  createdBy: {
+    _id: string
+    name: string
+    username: string
+    email: string
+    role: string
+  } | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminCategoryStat {
+  _id: string
+  name: string
+  slug: string
+  isActive: boolean
+  count: number
+}
+
+export async function fetchCategories(includeInactive = false) {
+  const url = includeInactive
+    ? `${API_BASE_URL}/admin/categories?includeInactive=true`
+    : `${API_BASE_URL}/categories`
+  const res = await fetch(url, {
+    headers: includeInactive ? authHeaders(true) : authHeaders(false),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch categories'))
+  }
+
+  return data.data as AdminCategory[]
+}
+
+export async function fetchCategoryStats() {
+  const res = await fetch(`${API_BASE_URL}/admin/categories/stats`, {
+    headers: authHeaders(true),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch category statistics'))
+  }
+
+  return data.data as AdminCategoryStat[]
+}
+
+export async function createCategory(payload: {
+  name: string
+  description?: string
+  order?: number
+  isActive?: boolean
+}) {
+  const res = await fetch(`${API_BASE_URL}/admin/categories`, {
+    method: 'POST',
+    headers: authHeaders(true),
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to create category'))
+  }
+
+  return data.data as AdminCategory
+}
+
+export async function updateCategory(
+  categoryId: string,
+  payload: Partial<{
+    name: string
+    description: string
+    order: number
+    isActive: boolean
+  }>,
+) {
+  const res = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+    method: 'PATCH',
+    headers: authHeaders(true),
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to update category'))
+  }
+
+  return data.data as AdminCategory
+}
+
+export async function deleteCategory(categoryId: string, reassignTo?: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+    method: 'DELETE',
+    headers: authHeaders(true),
+    body: reassignTo ? JSON.stringify({ reassignTo }) : undefined,
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(data, 'Unable to delete category'))
   }
 
   return data

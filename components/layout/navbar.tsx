@@ -36,6 +36,57 @@ export function Navbar() {
     setUser(getStoredUser())
   }, [pathname])
 
+  useEffect(() => {
+    if (!profileOpen && !mobileOpen) return undefined
+
+    function onDocumentClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+
+      if (profileOpen) {
+        const profileTrigger = document.querySelector('[data-profile-trigger]')
+        const profilePanel = document.querySelector('[data-profile-panel]')
+        if (
+          profileTrigger instanceof Element &&
+          profileTrigger.contains(target)
+        ) return
+        if (
+          profilePanel instanceof Element &&
+          profilePanel.contains(target)
+        ) return
+        setProfileOpen(false)
+      }
+
+      if (mobileOpen) {
+        const mobileTrigger = document.querySelector('[data-mobile-trigger]')
+        const mobilePanel = document.querySelector('[data-mobile-panel]')
+        if (
+          mobileTrigger instanceof Element &&
+          mobileTrigger.contains(target)
+        ) return
+        if (
+          mobilePanel instanceof Element &&
+          mobilePanel.contains(target)
+        ) return
+        setMobileOpen(false)
+      }
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setProfileOpen(false)
+        setMobileOpen(false)
+      }
+    }
+
+    window.addEventListener('mousedown', onDocumentClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('mousedown', onDocumentClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [profileOpen, mobileOpen])
+
   const isLoggedIn = Boolean(user)
 
   function handleLogout() {
@@ -50,6 +101,12 @@ export function Navbar() {
     e.preventDefault()
     const q = query.trim()
     router.push(q ? `/laws?q=${encodeURIComponent(q)}` : '/laws')
+    setMobileOpen(false)
+    setProfileOpen(false)
+  }
+
+  function closeAllMenus() {
+    setProfileOpen(false)
     setMobileOpen(false)
   }
 
@@ -105,6 +162,7 @@ export function Navbar() {
               <Button
                 variant="outline"
                 className="h-9 gap-1.5 px-2.5"
+                data-profile-trigger
                 onClick={() => setProfileOpen((o) => !o)}
                 aria-expanded={profileOpen}
               >
@@ -118,9 +176,11 @@ export function Navbar() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
                     className="absolute right-0 mt-2 w-44 overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-lg"
+                    data-profile-panel
                   >
                     <Link
                       href={user?.role === 'admin' ? '/admin/dashboard' : '/account'}
+                      onClick={closeAllMenus}
                       className="block rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-muted"
                     >
                       {user?.role === 'admin' ? 'Admin Dashboard' : 'My Account'}
@@ -138,10 +198,10 @@ export function Navbar() {
             </div>
           ) : (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <Button variant="ghost" className="h-9 px-2 sm:px-3" size="sm" render={<Link href="/login" />}>
+              <Button variant="ghost" className="h-9 px-2 sm:px-3" size="sm" render={<Link href="/login" onClick={closeAllMenus} />}>
                 Login
               </Button>
-              <Button className="h-9 px-2.5 sm:px-3.5" size="sm" render={<Link href="/register" />}>
+              <Button className="h-9 px-2.5 sm:px-3.5" size="sm" render={<Link href="/register" onClick={closeAllMenus} />}>
                 Register
               </Button>
             </div>
@@ -152,6 +212,7 @@ export function Navbar() {
             size="icon"
             className="lg:hidden"
             aria-label="Toggle menu"
+            data-mobile-trigger
             onClick={() => setMobileOpen((o) => !o)}
           >
             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -167,6 +228,7 @@ export function Navbar() {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden border-t border-border bg-background lg:hidden"
+            data-mobile-panel
           >
             <div className="space-y-1 px-4 py-4 sm:px-6">
               <form onSubmit={handleSearch} className="relative mb-3" role="search">

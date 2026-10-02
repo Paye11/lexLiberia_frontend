@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Users, LogOut, Loader2, Ticket, Megaphone, Smartphone } from 'lucide-react'
+import { FileText, Upload, Users, LogOut, Loader2, Ticket, Megaphone, Smartphone, FolderTree } from 'lucide-react'
 import { clearSession, fetchAdminStats, fetchPendingProofCount } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -170,6 +170,22 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="text-center">
               <Button variant="outline">Manage Notices</Button>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="cursor-pointer transition-colors hover:border-primary/50"
+            onClick={() => router.push('/admin/categories')}
+          >
+            <CardHeader className="text-center">
+              <FolderTree className="mx-auto h-12 w-12 text-primary" />
+              <CardTitle>Manage Categories</CardTitle>
+              <CardDescription>
+                Create, rename, reorder, or delete document categories
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button variant="outline">Open Categories</Button>
             </CardContent>
           </Card>
         </div>

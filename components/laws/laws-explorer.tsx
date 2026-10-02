@@ -52,6 +52,31 @@ export function LawsExplorer({
     setCategory(params.get('category') ?? 'all')
   }, [params])
 
+  useEffect(() => {
+    if (!filtersOpen) return undefined
+
+    function onDocumentClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      const trigger = document.querySelector('[data-laws-filter-trigger]')
+      const panel = document.querySelector('[data-laws-filter-panel]')
+      if (trigger instanceof Element && trigger.contains(target)) return
+      if (panel instanceof Element && panel.contains(target)) return
+      setFiltersOpen(false)
+    }
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setFiltersOpen(false)
+    }
+
+    window.addEventListener('mousedown', onDocumentClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('mousedown', onDocumentClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [filtersOpen])
+
   const years = useMemo(
     () => [...new Set(laws.map((l) => l.year))].sort((a, b) => b - a),
     [laws],
@@ -99,6 +124,7 @@ export function LawsExplorer({
       <aside
         className={`${filtersOpen ? 'block' : 'hidden'} lg:block`}
         aria-label="Filters"
+        data-laws-filter-panel
       >
         <div className="rounded-xl border border-border bg-card p-5 lg:sticky lg:top-24">
           <div className="mb-4 flex items-center justify-between">
@@ -187,6 +213,7 @@ export function LawsExplorer({
               variant="outline"
               size="sm"
               className="h-9 gap-1.5 lg:hidden"
+              data-laws-filter-trigger
               onClick={() => setFiltersOpen((o) => !o)}
             >
               <SlidersHorizontal className="size-4" />
