@@ -226,7 +226,10 @@ export default function AdminUsersPage() {
                             <Badge variant="secondary">Active</Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <p className="text-sm text-muted-foreground">
+                          @{user.username}
+                          {user.email ? ` · ${user.email}` : ''}
+                        </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           Joined {formatDate(user.createdAt)}
                         </p>

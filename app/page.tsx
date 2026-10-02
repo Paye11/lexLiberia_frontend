@@ -6,6 +6,7 @@ import { LatestUpdates } from '@/components/home/latest-updates'
 import { PlansSection } from '@/components/pricing/plans-section'
 import { Testimonials } from '@/components/home/testimonials'
 import { Newsletter } from '@/components/home/newsletter'
+import { MobileCtaBar } from '@/components/home/mobile-cta-bar'
 import { legalService } from '@/services/legal-service'
 
 export default async function HomePage() {
@@ -26,6 +27,8 @@ export default async function HomePage() {
       <PlansSection plans={plans} />
       <Testimonials testimonials={testimonials} />
       <Newsletter />
+      <div className="h-20 sm:hidden" />
+      <MobileCtaBar />
     </>
   )
 }

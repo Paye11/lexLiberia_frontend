@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { BookOpen, Search, ShieldCheck } from 'lucide-react'
+import { BookOpen, CreditCard, LogIn, Search, ShieldCheck, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useEffect, useState } from 'react'
+import { getStoredUser, type SessionUser } from '@/lib/api-client'
 
 const stats = [
   { value: '12,400+', label: 'Legal Documents' },
@@ -13,6 +15,14 @@ const stats = [
 ]
 
 export function Hero() {
+  const [user, setUser] = useState<SessionUser | null>(null)
+
+  useEffect(() => {
+    setUser(getStoredUser())
+  }, [])
+
+  const isLoggedIn = Boolean(user)
+
   return (
     <section className="relative overflow-hidden border-b border-border">
       <div
@@ -52,6 +62,39 @@ export function Hero() {
             >
               <BookOpen className="size-4" />
               View Library
+            </Button>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2 sm:gap-3">
+            {!isLoggedIn ? (
+              <>
+                <Button
+                  variant="secondary"
+                  className="h-10 px-3 sm:px-4 text-sm"
+                  size="sm"
+                  render={<Link href="/login" />}
+                >
+                  <LogIn className="size-4" />
+                  Login
+                </Button>
+                <Button
+                  className="h-10 px-3 sm:px-4 text-sm"
+                  size="sm"
+                  render={<Link href="/register" />}
+                >
+                  <UserPlus className="size-4" />
+                  Register
+                </Button>
+              </>
+            ) : null}
+            <Button
+              variant="gold"
+              className="h-10 px-3 sm:px-4 text-sm"
+              size="sm"
+              render={<Link href="/pricing" />}
+            >
+              <CreditCard className="size-4" />
+              Subscribe / Pay
             </Button>
           </div>
 

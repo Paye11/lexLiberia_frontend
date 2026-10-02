@@ -17,7 +17,8 @@ export interface UserAccess {
 export interface SessionUser {
   _id: string
   name: string
-  email: string
+  username: string
+  email?: string | null
   role: 'user' | 'admin'
   plan?: UserPlan | null
   planExpiresAt?: string | null
@@ -47,8 +48,15 @@ export interface UploadedDocument {
   fileAvailable?: boolean
 }
 
+const DEFAULT_API_URL =
+  typeof window !== 'undefined' &&
+  window.location.hostname !== 'localhost' &&
+  window.location.hostname !== '127.0.0.1'
+    ? '/api'
+    : 'http://localhost:5000/api'
+
 const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api'
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_URL
 )
   .trim()
   .replace(/\/+$/, '')
@@ -256,12 +264,16 @@ export async function loginWithGoogle(credential: string) {
   return data
 }
 
-export async function login(payload: { email: string; password: string }) {
+export async function login(payload: { username?: string; email?: string; password: string }) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        username: payload.username,
+        email: payload.email,
+        password: payload.password,
+      }),
     })
 
     const data = (await parseJsonSafe(res)) as AuthResponse | null
@@ -281,14 +293,20 @@ export async function login(payload: { email: string; password: string }) {
 
 export async function register(payload: {
   name: string
-  email: string
+  username: string
   password: string
+  email?: string | null
 }) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        name: payload.name,
+        username: payload.username,
+        password: payload.password,
+        email: payload.email || null,
+      }),
     })
 
     const data = (await parseJsonSafe(res)) as AuthResponse | null
@@ -513,7 +531,7 @@ export interface PaymentProof {
   createdAt: string
   updatedAt: string
   reviewedAt?: string | null
-  user?: { _id: string; name: string; email: string }
+  user?: { _id: string; name: string; username?: string; email?: string | null }
   plan?: { _id: string; name: string; priceMonthly?: number; priceAnnual?: number }
   approvedPlan?: { _id: string; name: string } | null
 }
@@ -888,7 +906,8 @@ export async function fetchAdminUsers() {
   return data.data as Array<{
     _id: string
     name: string
-    email: string
+    username: string
+    email?: string | null
     role: string
     plan?: { name: string; priceMonthly?: number } | null
     planExpiresAt?: string | null

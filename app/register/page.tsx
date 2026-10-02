@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Mail, User } from 'lucide-react'
+import { Lock, User, Hash } from 'lucide-react'
 import { register } from '@/lib/api-client'
 import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 export default function RegisterPage() {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -24,6 +24,21 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
 
+    if (!username.trim()) {
+      setError('Username is required')
+      return
+    }
+
+    if (!/^[A-Za-z0-9 \-_.']+$/.test(username.trim())) {
+      setError('Username can contain letters, numbers, spaces, hyphens, underscores, periods, and apostrophes')
+      return
+    }
+
+    if (password.length < 4) {
+      setError('Password must be at least 4 characters')
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
@@ -32,7 +47,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      await register({ name, email, password })
+      await register({ name, username: username.trim(), password })
       router.push('/account')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
@@ -69,16 +84,19 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Hash className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="pl-10"
-                    placeholder="you@example.com"
+                    placeholder="Any name, word, or number"
+                    autoComplete="username"
+                    minLength={2}
+                    maxLength={32}
                     required
                   />
                 </div>
@@ -94,7 +112,9 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
-                    placeholder="Create a password"
+                    placeholder="At least 4 characters"
+                    minLength={4}
+                    autoComplete="new-password"
                     required
                   />
                 </div>
@@ -102,14 +122,19 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat your password"
-                  required
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground opacity-0" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat your password"
+                    minLength={4}
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
               </div>
 
               {error ? <p className="text-sm text-destructive">{error}</p> : null}

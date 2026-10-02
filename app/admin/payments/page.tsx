@@ -162,7 +162,8 @@ export default function AdminPaymentsPage() {
                   <CardHeader>
                     <CardTitle>{proof.user?.name || 'Subscriber'}</CardTitle>
                     <CardDescription>
-                      {proof.user?.email} · asked for {proof.plan?.name} · ${proof.amount}{' '}
+                      {proof.user?.username ? `@${proof.user.username}` : proof.user?.email || 'Unknown user'}
+                      {' · '}asked for {proof.plan?.name} · ${proof.amount}{' '}
                       {proof.billingCycle === 'annual' ? 'per year' : 'per month'}
                     </CardDescription>
                   </CardHeader>

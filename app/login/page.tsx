@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Mail } from 'lucide-react'
+import { Lock, Hash } from 'lucide-react'
 import { login } from '@/lib/api-client'
 import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,7 @@ function nextPath(role?: string) {
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -30,7 +30,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const data = await login({ email, password })
+      const data = await login({ username, password })
       router.push(nextPath(data.user.role))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
@@ -52,16 +52,17 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Hash className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="pl-10"
-                    placeholder="you@example.com"
+                    placeholder="Enter your username"
+                    autoComplete="username"
                     required
                   />
                 </div>
@@ -78,6 +79,8 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
                     placeholder="Enter your password"
+                    minLength={4}
+                    autoComplete="current-password"
                     required
                   />
                 </div>

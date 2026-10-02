@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Crown, Loader2, Mail, Ticket } from 'lucide-react'
+import { Crown, Hash, Loader2, Mail, Ticket } from 'lucide-react'
 import {
   fetchMyMessages,
   getAccessProfile,
@@ -134,13 +134,28 @@ export default function AccountPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between gap-4 border-b border-border pb-3">
-                <span className="text-muted-foreground">Name</span>
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="size-4 opacity-0" />
+                  Name
+                </span>
                 <span className="font-medium">{user.name}</span>
               </div>
               <div className="flex justify-between gap-4 border-b border-border pb-3">
-                <span className="text-muted-foreground">Email</span>
-                <span className="font-medium">{user.email}</span>
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Hash className="size-4" />
+                  Username
+                </span>
+                <span className="font-medium">{user.username}</span>
               </div>
+              {user.email ? (
+                <div className="flex justify-between gap-4 border-b border-border pb-3">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="size-4" />
+                    Email
+                  </span>
+                  <span className="font-medium">{user.email}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Role</span>
                 <Badge variant="secondary" className="capitalize">

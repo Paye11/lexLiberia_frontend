@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Mail } from 'lucide-react'
+import { Lock, Hash } from 'lucide-react'
 import { clearSession, login } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      const data = await login({ email, password })
+      const data = await login({ username, password })
 
       if (data.user.role !== 'admin') {
         clearSession()
@@ -48,16 +48,17 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Admin Email</Label>
+              <Label htmlFor="username">Admin Username</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Hash className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your admin email"
+                  id="username"
+                  type="text"
+                  placeholder="Enter your admin username"
                   className="pl-10"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  autoComplete="username"
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>
@@ -72,6 +73,8 @@ export default function AdminLoginPage() {
                   placeholder="Enter your password"
                   className="pl-10"
                   value={password}
+                  minLength={4}
+                  autoComplete="current-password"
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
