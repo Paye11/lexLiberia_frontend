@@ -38,6 +38,7 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
     const res = await fetch(`${API_BASE_URL}${path}`, {
       headers: { 'Content-Type': 'application/json' },
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(2500),
     })
     if (!res.ok) throw new Error(`Request failed: ${res.status}`)
     return (await res.json()) as T

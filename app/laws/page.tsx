@@ -4,6 +4,8 @@ import { LawsExplorer } from '@/components/laws/laws-explorer'
 import { PremiumDocuments } from '@/components/documents/premium-documents'
 import { legalService } from '@/services/legal-service'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Laws & Statutes',
   description:

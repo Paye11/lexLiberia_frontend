@@ -5,6 +5,8 @@ import { SectionHeading } from '@/components/section-heading'
 import { legalService } from '@/services/legal-service'
 import { faqs as fallbackFaqs, plans as fallbackPlans } from '@/lib/mock-data'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Pricing',
   description:

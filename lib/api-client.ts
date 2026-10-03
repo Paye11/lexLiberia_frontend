@@ -388,6 +388,7 @@ export async function fetchPlans() {
     const res = await fetch(`${API_BASE_URL}/plans`, {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
+      signal: AbortSignal.timeout(2500),
     })
 
     const data = await parseJsonSafe(res)

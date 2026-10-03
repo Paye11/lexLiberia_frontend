@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { OpinionsExplorer } from '@/components/opinions/opinions-explorer'
 import { legalService } from '@/services/legal-service'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Supreme Court Opinions',
   description:

@@ -15,6 +15,8 @@ import {
   testimonials as fallbackTestimonials,
 } from '@/lib/mock-data'
 
+export const dynamic = 'force-dynamic'
+
 function ensureArray<T>(value: unknown, fallback: readonly T[]): T[] {
   return Array.isArray(value) ? (value as T[]) : (fallback as T[])
 }
