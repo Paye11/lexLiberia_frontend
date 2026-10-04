@@ -4,8 +4,8 @@ import { fileURLToPath } from 'url'
 const root = path.dirname(fileURLToPath(import.meta.url))
 
 const _RAW_REMOTE =
-  process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ||
   'http://localhost:5000/api'
 
 const REMOTE_API_BASE = (() => {

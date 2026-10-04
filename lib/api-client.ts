@@ -58,8 +58,8 @@ const DEFAULT_API_URL =
 
 export function getApiBaseUrl(): string {
   const raw =
-    process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ??
     process.env.NEXT_PUBLIC_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ??
     DEFAULT_API_URL;
   const trimmed = raw.trim().replace(/\/+$/, '').replace(/\.+$/, '');
   if (!trimmed.startsWith('/') && !trimmed.startsWith('http')) {
