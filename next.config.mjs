@@ -3,13 +3,26 @@ import { fileURLToPath } from 'url'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 
-const REMOTE_API_BASE = (
+const _RAW_REMOTE =
   process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   'http://localhost:5000/api'
-)
-  .trim()
-  .replace(/\/+$/, '')
+
+const REMOTE_API_BASE = (() => {
+  const trimmed = _RAW_REMOTE.trim().replace(/\/+$/, '').replace(/\.+$/, '')
+  if (!trimmed) return 'http://localhost:5000/api'
+  if (trimmed.startsWith('/')) return 'http://localhost:5000/api'
+  if (
+    trimmed !== '/api' &&
+    !trimmed.endsWith('/api') &&
+    !trimmed.includes('localhost') &&
+    !trimmed.includes('127.0.0.1') &&
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return `${trimmed}/api`
+  }
+  return trimmed
+})()
 
 const remoteApiHost = (() => {
   try {
