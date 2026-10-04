@@ -56,12 +56,28 @@ const DEFAULT_API_URL =
     ? '/api'
     : 'http://localhost:5000/api'
 
-const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_URL
-)
-  .trim()
-  .replace(/\/+$/, '')
-  .replace(/\.+$/, '')
+export function getApiBaseUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_REMOTE_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    DEFAULT_API_URL;
+  const trimmed = raw.trim().replace(/\/+$/, '').replace(/\.+$/, '');
+  if (!trimmed.startsWith('/') && !trimmed.startsWith('http')) {
+    return DEFAULT_API_URL;
+  }
+  if (
+    trimmed !== '/api' &&
+    !trimmed.endsWith('/api') &&
+    !trimmed.includes('localhost') &&
+    !trimmed.includes('127.0.0.1') &&
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return `${trimmed}/api`;
+  }
+  return trimmed;
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 const TOKEN_KEY = 'lexliberia_token'
 const USER_KEY = 'lexliberia_user'
@@ -105,14 +121,14 @@ function toFriendlyNetworkError(error: unknown, fallback: string) {
       API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')
 
     if (isLocalhost) {
-      return `${fallback} The site is calling localhost instead of your live API. Set NEXT_PUBLIC_API_BASE_URL on Vercel to your Render URL (e.g. https://your-app.onrender.com/api) and redeploy.`
+      return `${fallback} The site is calling localhost instead of your live API. Set NEXT_PUBLIC_REMOTE_API_BASE_URL on Vercel to your Railway URL (e.g. https://lexliberia-backend-production-XXXX.up.railway.app) and redeploy.`
     }
 
-    return `${fallback} Cannot reach the API at ${API_BASE_URL}. Check that Render is running and CLIENT_URL on Render matches your Vercel URL exactly.`
+    return `${fallback} Cannot reach the API at ${API_BASE_URL}. Check that your backend host (Railway) is running and CORS settings match your Vercel domain.`
   }
 
   if (error instanceof Error && error.message === 'Failed to fetch') {
-    return `${fallback} Cannot reach the API at ${API_BASE_URL}. Check Vercel env vars and Render CORS settings.`
+    return `${fallback} Cannot reach the API at ${API_BASE_URL}. Check Vercel env vars (NEXT_PUBLIC_REMOTE_API_BASE_URL) and backend CORS settings.`
   }
 
   return fallback

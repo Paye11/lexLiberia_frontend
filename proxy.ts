@@ -13,6 +13,15 @@ const API_BASE_URL = (() => {
   if (trimmed.startsWith('/')) {
     return 'http://localhost:5000/api'
   }
+  if (
+    trimmed !== '/api' &&
+    !trimmed.endsWith('/api') &&
+    !trimmed.includes('localhost') &&
+    !trimmed.includes('127.0.0.1') &&
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return `${trimmed}/api`
+  }
   return trimmed
 })()
 
