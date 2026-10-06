@@ -385,7 +385,6 @@ export const plans: Plan[] = [
       'Unlimited document views',
       'Supreme Court opinions access',
       'Bookmarks & downloads',
-      'AI Research and Ask Me',
     ],
   },
   {
@@ -398,7 +397,6 @@ export const plans: Plan[] = [
     features: [
       'Everything in Student',
       'Advanced filters & citations',
-      'Unlimited AI Research and Ask Me',
       'Related cases & cross-references',
       'PDF export & print',
       'Priority support',
@@ -432,9 +430,9 @@ export const faqs: FaqItem[] = [
       'Our library is compiled from official gazettes, the Liberian Code of Laws Revised, and Supreme Court records, and is updated regularly as new materials are published.',
   },
   {
-    question: 'How accurate are AI Research and Ask Me?',
+    question: 'Are AI legal research tools available on paid plans?',
     answer:
-      'Both assistants search laws on LexLiberia, Liberian judiciary sources, and the wider web, and they cite sources so you can verify every answer.',
+      'AI research assistants are currently restricted to LexLiberia administrators for quality control. Premium plans focus on expanded document access, citations, export, and priority support.',
   },
   {
     question: 'Do you offer discounts for institutions?',

@@ -34,8 +34,9 @@ export default async function PricingPage() {
               Plans for every legal professional
             </h1>
             <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
-              Start free and upgrade as your research needs grow. All paid plans
-              include AI Research, Ask Me, full-text search, and citation tools.
+              Start free and upgrade as your research needs grow. Paid plans unlock
+              premium documents, full-text search, citations, export, and priority
+              support.
             </p>
           </div>
         </section>

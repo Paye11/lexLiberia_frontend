@@ -20,7 +20,7 @@ export function ResearchChat({
   assistantName = 'LexLiberia AI',
   title = 'AI Legal Research Assistant',
   description = 'Ask questions in plain language. The assistant searches Liberian statutes, Supreme Court opinions, and legal resources on the web, providing answers with citations and judgment formats. Always verify with the primary sources before relying on any answer.',
-  lockedTitle = 'AI Research requires a paid plan',
+  lockedTitle = 'AI Research is for the admin only',
   suggestions = defaultSuggestions,
   ask = askLegalResearch,
   otherAssistant,
@@ -184,16 +184,10 @@ export function ResearchChat({
           </div>
           <h1 className="mt-6 font-heading text-2xl font-bold">{lockedTitle}</h1>
           <p className="mt-3 text-muted-foreground">
-            Upgrade your account or redeem an admin coupon to unlock AI legal research and premium document access.
+            This assistant is restricted to admin accounts. Log in as an admin user to use LexLiberia AI.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button render={<Link href="/login" />}>Login</Button>
-            <Button variant="outline" render={<Link href="/pricing" />}>
-              View Plans
-            </Button>
-            <Button variant="outline" render={<Link href="/account" />}>
-              Redeem Coupon
-            </Button>
+            <Button render={<Link href="/login" />}>Login as Admin</Button>
           </div>
         </div>
       </section>

@@ -211,7 +211,7 @@ export default function AccountPage() {
 
               {user.access?.isAdmin ? (
                 <Badge variant="gold" className="mt-3">
-                  Admin — full free access to documents, AI Research, and Ask Me
+                  Admin — full access to documents and internal LexLiberia tools
                 </Badge>
               ) : user.access?.hasPaidPlan ? (
                 <Badge variant="gold" className="mt-3">
@@ -219,7 +219,7 @@ export default function AccountPage() {
                 </Badge>
               ) : (
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Free plan — premium uploads, AI Research, and Ask Me require a paid plan or coupon.
+                  Free plan — premium documents and citations require a paid plan or coupon.
                 </p>
               )}
 

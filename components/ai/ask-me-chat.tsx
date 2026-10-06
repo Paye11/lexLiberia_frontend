@@ -16,7 +16,7 @@ export function AskMeChat() {
       assistantName="Ask Me"
       title="Ask Me"
       description="Ask Me searches laws uploaded on LexLiberia first, then the Supreme Court opinions at judiciary.gov.lr, LiberLII, and the wider web. You can attach a pleading. Verify important answers with the official sources."
-      lockedTitle="Ask Me requires a paid plan"
+      lockedTitle="Ask Me is for the admin only"
       suggestions={suggestions}
       ask={askMe}
       otherAssistant={{ href: '/ai-research', label: 'Or open AI Research' }}

@@ -63,7 +63,7 @@ export default function RegisterPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <CardDescription>
-              Create a free account. Premium laws, AI Research, and Ask Me stay locked until you subscribe or redeem a coupon.
+              Create a free account. Premium laws and advanced research tools stay locked until you subscribe or redeem a coupon.
             </CardDescription>
           </CardHeader>
           <CardContent>

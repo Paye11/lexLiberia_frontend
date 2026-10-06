@@ -109,19 +109,7 @@ export default async function LawDetailPage({
             </div>
           ) : null}
 
-          <div className="mt-12 rounded-lg border border-border bg-muted/40 p-6">
-            <h3 className="font-heading text-base font-semibold text-foreground">
-              Need deeper analysis?
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Ask AI Research or Ask Me about this statute and related case law.
-              Both assistants are included with a paid plan.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button render={<Link href="/ai-research">AI Research</Link>} />
-              <Button variant="outline" render={<Link href="/ask-me">Ask Me</Link>} />
-            </div>
-          </div>
+
         </article>
     </>
   )
