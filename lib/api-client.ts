@@ -211,13 +211,11 @@ export async function askLegalResearch(question: string, attachment?: File) {
     body = JSON.stringify({ question })
   }
 
-  const res = await fetchWithFallback(`/ai/research`,{
+  const res = await fetch(`${API_BASE_URL}/ai/research`, {
     method: 'POST',
     headers,
     body,
-  
-    timeoutMs: 60_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data?.content) {
@@ -248,13 +246,11 @@ export async function askMe(question: string, attachment?: File) {
     body = JSON.stringify({ question })
   }
 
-  const res = await fetchWithFallback(`/ai/ask`,{
+  const res = await fetch(`${API_BASE_URL}/ai/ask`, {
     method: 'POST',
     headers,
     body,
-  
-    timeoutMs: 60_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data?.content) {
@@ -270,13 +266,11 @@ export async function askMe(question: string, attachment?: File) {
 }
 
 export async function loginWithGoogle(credential: string) {
-  const res = await fetchWithFallback(`/auth/google`,{
+  const res = await fetch(`${API_BASE_URL}/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ credential }),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = (await parseJsonSafe(res)) as AuthResponse | null
   if (!res.ok || !data?.token || !data.user) {
@@ -289,7 +283,7 @@ export async function loginWithGoogle(credential: string) {
 
 export async function login(payload: { username?: string; email?: string; password: string }) {
   try {
-    const res = await fetchWithFallback(`/auth/login`,{
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -297,9 +291,7 @@ export async function login(payload: { username?: string; email?: string; passwo
         email: payload.email,
         password: payload.password,
       }),
-    
-      timeoutMs: 15_000,
-})
+    })
 
     const data = (await parseJsonSafe(res)) as AuthResponse | null
     if (!res.ok || !data?.token || !data.user) {
@@ -323,7 +315,7 @@ export async function register(payload: {
   email?: string | null
 }) {
   try {
-    const res = await fetchWithFallback(`/auth/register`,{
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -332,9 +324,7 @@ export async function register(payload: {
         password: payload.password,
         email: payload.email || null,
       }),
-    
-      timeoutMs: 15_000,
-})
+    })
 
     const data = (await parseJsonSafe(res)) as AuthResponse | null
     if (!res.ok || !data?.token || !data.user) {
@@ -382,15 +372,13 @@ export async function uploadDocuments(items: Array<{
   items.forEach((item) => formData.append('files', item.file))
 
   try {
-    const res = await fetchWithFallback(`/documents`,{
+    const res = await fetch(`${API_BASE_URL}/documents`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
       },
       body: formData,
-    
-      timeoutMs: 180_000,
-})
+    })
 
     const data = await parseJsonSafe(res)
     if (!res.ok) {
@@ -413,13 +401,11 @@ export async function uploadDocuments(items: Array<{
 
 export async function fetchPlans() {
   try {
-    const res = await fetchWithFallback(`/plans`,{
+    const res = await fetch(`${API_BASE_URL}/plans`, {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
       signal: AbortSignal.timeout(2500),
-    
-      timeoutMs: 8_000,
-})
+    })
 
     const data = await parseJsonSafe(res)
     if (!res.ok || !data?.data) {
@@ -439,15 +425,13 @@ export async function getMe() {
     throw new Error('Not authenticated')
   }
 
-  const res = await fetchWithFallback(`/auth/me`,{
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.user) {
@@ -459,12 +443,10 @@ export async function getMe() {
 }
 
 export async function fetchDocuments(limit = 50) {
-  const res = await fetchWithFallback(`/documents?limit=${limit}`,{
+  const res = await fetch(`${API_BASE_URL}/documents?limit=${limit}`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 180_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -475,12 +457,10 @@ export async function fetchDocuments(limit = 50) {
 }
 
 export async function fetchDocument(documentId: string) {
-  const res = await fetchWithFallback(`/documents/${documentId}`,{
+  const res = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 180_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (data?.data) {
@@ -508,13 +488,11 @@ async function fetchDocumentFileResponse(documentId: string, inline = false) {
   }
 
   const query = inline ? '?inline=1' : ''
-  const res = await fetchWithFallback(`/documents/download/${documentId}${query}`,{
+  const res = await fetch(`${API_BASE_URL}/documents/download/${documentId}${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  
-    timeoutMs: 120_000,
-})
+  })
 
   if (!res.ok) {
     const contentType = res.headers.get('content-type') || ''
@@ -577,9 +555,7 @@ export interface PaymentProof {
 }
 
 export async function fetchPayInstructions() {
-  const res = await fetchWithFallback(`/payments/instructions`,{ cache: 'no-store',
-  timeoutMs: 15_000,
-})
+  const res = await fetch(`${API_BASE_URL}/payments/instructions`, { cache: 'no-store' })
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
     throw new Error(parseErrorMessage(data, 'Unable to load payment details'))
@@ -590,12 +566,10 @@ export async function fetchPayInstructions() {
 export async function fetchMyPaymentProof() {
   const token = getStoredToken()
   if (!token) return null
-  const res = await fetchWithFallback(`/payments/proof/mine`,{
+  const res = await fetch(`${API_BASE_URL}/payments/proof/mine`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok) {
     throw new Error(parseErrorMessage(data, 'Unable to load your payment'))
@@ -618,13 +592,11 @@ export async function submitPaymentProof(payload: {
   body.append('billingCycle', payload.billingCycle)
   body.append('screenshot', payload.screenshot)
 
-  const res = await fetchWithFallback(`/payments/proof`,{
+  const res = await fetch(`${API_BASE_URL}/payments/proof`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body,
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
     throw new Error(parseErrorMessage(data, 'Unable to send the screenshot'))
@@ -633,12 +605,10 @@ export async function submitPaymentProof(payload: {
 }
 
 export async function fetchPendingProofCount() {
-  const res = await fetchWithFallback(`/admin/payment-proofs/count`,{
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/count`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
     throw new Error(parseErrorMessage(data, 'Unable to check pending payments'))
@@ -647,12 +617,10 @@ export async function fetchPendingProofCount() {
 }
 
 export async function fetchPaymentProofs(status: 'pending' | 'approved' | 'rejected' = 'pending') {
-  const res = await fetchWithFallback(`/admin/payment-proofs?status=${status}`,{
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs?status=${status}`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
     throw new Error(parseErrorMessage(data, 'Unable to load payment screenshots'))
@@ -661,12 +629,10 @@ export async function fetchPaymentProofs(status: 'pending' | 'approved' | 'rejec
 }
 
 export async function fetchPaymentProofImage(proofId: string) {
-  const res = await fetchWithFallback(`/admin/payment-proofs/${proofId}/screenshot`,{
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/${proofId}/screenshot`, {
     headers: { Authorization: `Bearer ${getStoredToken()}` },
     cache: 'no-store',
-  
-    timeoutMs: 120_000,
-})
+  })
   if (!res.ok) {
     throw new Error('Unable to load the screenshot')
   }
@@ -677,13 +643,11 @@ export async function approvePaymentProof(proofId: string, payload: {
   planId: string
   billingCycle: 'monthly' | 'annual'
 }) {
-  const res = await fetchWithFallback(`/admin/payment-proofs/${proofId}/approve`,{
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/${proofId}/approve`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok) {
     throw new Error(parseErrorMessage(data, 'Unable to confirm this payment'))
@@ -692,13 +656,11 @@ export async function approvePaymentProof(proofId: string, payload: {
 }
 
 export async function rejectPaymentProof(proofId: string) {
-  const res = await fetchWithFallback(`/admin/payment-proofs/${proofId}/reject`,{
+  const res = await fetch(`${API_BASE_URL}/admin/payment-proofs/${proofId}/reject`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify({}),
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok) {
     throw new Error(parseErrorMessage(data, 'Unable to reject this payment'))
@@ -723,12 +685,10 @@ export async function syncAdminPush(requestPermission: boolean, renew = false): 
   const registration = await navigator.serviceWorker.register('/sw.js')
   await navigator.serviceWorker.ready
 
-  const keyRes = await fetchWithFallback(`/admin/push/public-key`,{
+  const keyRes = await fetch(`${API_BASE_URL}/admin/push/public-key`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
   const keyData = await parseJsonSafe(keyRes)
   const publicKey = keyData?.data?.publicKey
   if (!keyRes.ok || !publicKey) return 'server-missing'
@@ -745,13 +705,11 @@ export async function syncAdminPush(requestPermission: boolean, renew = false): 
     })
   }
 
-  const res = await fetchWithFallback(`/admin/push/subscribe`,{
+  const res = await fetch(`${API_BASE_URL}/admin/push/subscribe`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify({ subscription: subscription.toJSON() }),
-  
-    timeoutMs: 15_000,
-})
+  })
   if (!res.ok) {
     const data = await parseJsonSafe(res)
     throw new Error(parseErrorMessage(data, 'Unable to save phone alerts'))
@@ -760,12 +718,10 @@ export async function syncAdminPush(requestPermission: boolean, renew = false): 
 }
 
 export async function sendTestAdminAlert() {
-  const res = await fetchWithFallback(`/admin/push/test`,{
+  const res = await fetch(`${API_BASE_URL}/admin/push/test`, {
     method: 'POST',
     headers: authHeaders(true),
-  
-    timeoutMs: 15_000,
-})
+  })
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
     throw new Error(parseErrorMessage(data, 'Unable to send a test alert'))
@@ -802,13 +758,11 @@ export async function redeemCoupon(code: string) {
     throw new Error('Please log in to redeem a coupon.')
   }
 
-  const res = await fetchWithFallback(`/coupons/redeem`,{
+  const res = await fetch(`${API_BASE_URL}/coupons/redeem`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify({ code }),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.user) {
@@ -825,12 +779,10 @@ export async function getAccessProfile() {
     throw new Error('Not authenticated')
   }
 
-  const res = await fetchWithFallback(`/coupons/access`,{
+  const res = await fetch(`${API_BASE_URL}/coupons/access`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -859,12 +811,10 @@ export interface AdminCoupon {
 }
 
 export async function fetchAdminCoupons() {
-  const res = await fetchWithFallback(`/admin/coupons`,{
+  const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -881,13 +831,11 @@ export async function createCoupon(payload: {
   maxUses?: number
   expiresAt?: string
 }) {
-  const res = await fetchWithFallback(`/admin/coupons`,{
+  const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -898,12 +846,10 @@ export async function createCoupon(payload: {
 }
 
 export async function deactivateCoupon(couponId: string) {
-  const res = await fetchWithFallback(`/admin/coupons/${couponId}`,{
+  const res = await fetch(`${API_BASE_URL}/admin/coupons/${couponId}`, {
     method: 'DELETE',
     headers: authHeaders(true),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -940,30 +886,27 @@ export interface AdminCategoryStat {
 }
 
 export async function fetchCategories(includeInactive = false) {
-  const path = includeInactive ? `/categories?includeInactive=true` : `/categories`
-  try {
-    const res = await fetchWithFallback(path, {
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-      timeoutMs: 8_000,
-    })
-    const data = await parseJsonSafe(res)
-    if (!res.ok || !data?.data) {
-      throw new Error(parseErrorMessage(data, 'Unable to load categories'))
-    }
-    return data.data as Array<any>
-  } catch (error) {
-    return []
+  const url = includeInactive
+    ? `${API_BASE_URL}/admin/categories?includeInactive=true`
+    : `${API_BASE_URL}/categories`
+  const res = await fetch(url, {
+    headers: includeInactive ? authHeaders(true) : authHeaders(false),
+    cache: 'no-store',
+  })
+
+  const data = await parseJsonSafe(res)
+  if (!res.ok || !data?.data) {
+    throw new Error(parseErrorMessage(data, 'Unable to fetch categories'))
   }
+
+  return data.data as AdminCategory[]
 }
 
 export async function fetchCategoryStats() {
-  const res = await fetchWithFallback(`/admin/categories/stats`,{
+  const res = await fetch(`${API_BASE_URL}/admin/categories/stats`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -979,13 +922,11 @@ export async function createCategory(payload: {
   order?: number
   isActive?: boolean
 }) {
-  const res = await fetchWithFallback(`/admin/categories`,{
+  const res = await fetch(`${API_BASE_URL}/admin/categories`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1004,13 +945,11 @@ export async function updateCategory(
     isActive: boolean
   }>,
 ) {
-  const res = await fetchWithFallback(`/admin/categories/${categoryId}`,{
+  const res = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
     method: 'PATCH',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1021,13 +960,11 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(categoryId: string, reassignTo?: string) {
-  const res = await fetchWithFallback(`/admin/categories/${categoryId}`,{
+  const res = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
     method: 'DELETE',
     headers: authHeaders(true),
     body: reassignTo ? JSON.stringify({ reassignTo }) : undefined,
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1043,14 +980,12 @@ export async function deleteDocument(documentId: string) {
     throw new Error('Please log in as an admin first.')
   }
 
-  const res = await fetchWithFallback(`/documents/${documentId}`,{
+  const res = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  
-    timeoutMs: 180_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1066,15 +1001,13 @@ export async function fetchAdminStats() {
     throw new Error('Please log in as an admin first.')
   }
 
-  const res = await fetchWithFallback(`/admin/stats`,{
+  const res = await fetch(`${API_BASE_URL}/admin/stats`, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -1090,15 +1023,13 @@ export async function fetchAdminUsers() {
     throw new Error('Please log in as an admin first.')
   }
 
-  const res = await fetchWithFallback(`/admin/users`,{
+  const res = await fetch(`${API_BASE_URL}/admin/users`, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -1128,12 +1059,10 @@ export async function fetchAdminUsers() {
 }
 
 export async function disableAdminUser(userId: string) {
-  const res = await fetchWithFallback(`/admin/users/${userId}/disable`,{
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/disable`, {
     method: 'PATCH',
     headers: authHeaders(true),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1144,12 +1073,10 @@ export async function disableAdminUser(userId: string) {
 }
 
 export async function enableAdminUser(userId: string) {
-  const res = await fetchWithFallback(`/admin/users/${userId}/enable`,{
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/enable`, {
     method: 'PATCH',
     headers: authHeaders(true),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1160,12 +1087,10 @@ export async function enableAdminUser(userId: string) {
 }
 
 export async function deleteAdminUser(userId: string) {
-  const res = await fetchWithFallback(`/admin/users/${userId}`,{
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
     method: 'DELETE',
     headers: authHeaders(true),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1180,13 +1105,11 @@ export async function sendAdminMessage(payload: {
   subject: string
   body: string
 }) {
-  const res = await fetchWithFallback(`/admin/messages`,{
+  const res = await fetch(`${API_BASE_URL}/admin/messages`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1211,11 +1134,9 @@ export interface AdminNotice extends PublicNotice {
 
 export async function fetchPublicNotices() {
   try {
-    const res = await fetchWithFallback(`/notices/public`,{
+    const res = await fetch(`${API_BASE_URL}/notices/public`, {
       cache: 'no-store',
-    
-      timeoutMs: 15_000,
-})
+    })
 
     const data = await parseJsonSafe(res)
     if (!res.ok || !data?.data) {
@@ -1229,12 +1150,10 @@ export async function fetchPublicNotices() {
 }
 
 export async function fetchAdminNotices() {
-  const res = await fetchWithFallback(`/admin/notices`,{
+  const res = await fetch(`${API_BASE_URL}/admin/notices`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -1249,13 +1168,11 @@ export async function createAdminNotice(payload: {
   content: string
   type: 'public' | 'email' | 'both'
 }) {
-  const res = await fetchWithFallback(`/admin/notices`,{
+  const res = await fetch(`${API_BASE_URL}/admin/notices`, {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(payload),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
@@ -1275,12 +1192,10 @@ export interface UserMessage {
 }
 
 export async function fetchMyMessages() {
-  const res = await fetchWithFallback(`/messages`,{
+  const res = await fetch(`${API_BASE_URL}/messages`, {
     headers: authHeaders(true),
     cache: 'no-store',
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok || !data?.data) {
@@ -1291,12 +1206,10 @@ export async function fetchMyMessages() {
 }
 
 export async function markMessageRead(messageId: string) {
-  const res = await fetchWithFallback(`/messages/${messageId}/read`,{
+  const res = await fetch(`${API_BASE_URL}/messages/${messageId}/read`, {
     method: 'PATCH',
     headers: authHeaders(true),
-  
-    timeoutMs: 15_000,
-})
+  })
 
   const data = await parseJsonSafe(res)
   if (!res.ok) {
