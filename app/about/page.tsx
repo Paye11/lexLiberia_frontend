@@ -154,8 +154,9 @@ export default function AboutPage() {
               </h2>
               <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-primary-foreground/80 text-pretty">
                 Create a free account to start searching statutes and reading
-                opinions. Paid plans add premium documents, citations, and advanced
-                export tools.
+                opinions. Paid plans add AI Research and Ask Me with five task
+                modes — research, draft, review, explain, and compare — plus
+                premium documents, citations, and export tools.
               </p>
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Button

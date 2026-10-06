@@ -1,18 +1,14 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { Globe, Mail, MapPin, MessageCircle, Phone, Send } from 'lucide-react'
 import { BrandLogo } from '@/components/brand-logo'
-import { getStoredUser, type SessionUser } from '@/lib/api-client'
 
-const ALL_QUICK_LINKS = [
-  { label: 'Laws', href: '/laws', adminOnly: false },
-  { label: 'Supreme Court Opinions', href: '/opinions', adminOnly: false },
-  { label: 'AI Legal Research', href: '/ai-research', adminOnly: true },
-  { label: 'Ask Me', href: '/ask-me', adminOnly: true },
-  { label: 'Pricing', href: '/pricing', adminOnly: false },
-  { label: 'About', href: '/about', adminOnly: false },
+const quickLinks = [
+  { label: 'Laws', href: '/laws' },
+  { label: 'Supreme Court Opinions', href: '/opinions' },
+  { label: 'AI Legal Research', href: '/ai-research' },
+  { label: 'Ask Me', href: '/ask-me' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'About', href: '/about' },
 ]
 
 const legalLinks = [
@@ -22,14 +18,6 @@ const legalLinks = [
 ]
 
 export function Footer() {
-  const [user, setUser] = useState<SessionUser | null>(null)
-
-  useEffect(() => {
-    setUser(getStoredUser())
-  }, [])
-
-  const quickLinks = ALL_QUICK_LINKS.filter((l) => !l.adminOnly || user?.role === 'admin')
-
   return (
     <footer className="border-t border-border bg-sidebar">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

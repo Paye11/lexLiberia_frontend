@@ -35,8 +35,9 @@ export default async function PricingPage() {
             </h1>
             <p className="mt-3 text-base leading-relaxed text-muted-foreground text-pretty">
               Start free and upgrade as your research needs grow. Paid plans unlock
-              premium documents, full-text search, citations, export, and priority
-              support.
+              premium documents, AI Research + Ask Me with five task modes
+              (Research, Draft, Review, Explain, Compare), full-text search,
+              citations, export, and priority support.
             </p>
           </div>
         </section>

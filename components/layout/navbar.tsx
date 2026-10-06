@@ -12,16 +12,16 @@ import { BrandLogo } from '@/components/brand-logo'
 import { clearSession, getStoredUser, type SessionUser } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 
-const ALL_NAV_ITEMS = [
-  { label: 'Home', href: '/', adminOnly: false },
-  { label: 'Laws', href: '/laws', adminOnly: false },
-  { label: 'Opinions', href: '/opinions', adminOnly: false },
-  { label: 'Categories', href: '/#categories', adminOnly: false },
-  { label: 'AI Research', href: '/ai-research', adminOnly: true },
-  { label: 'Ask Me', href: '/ask-me', adminOnly: true },
-  { label: 'Pricing', href: '/pricing', adminOnly: false },
-  { label: 'About', href: '/about', adminOnly: false },
-  { label: 'Contact', href: '/contact', adminOnly: false },
+const navItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Laws', href: '/laws' },
+  { label: 'Opinions', href: '/opinions' },
+  { label: 'Categories', href: '/#categories' },
+  { label: 'AI Research', href: '/ai-research' },
+  { label: 'Ask Me', href: '/ask-me' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ]
 
 export function Navbar() {
@@ -88,7 +88,6 @@ export function Navbar() {
   }, [profileOpen, mobileOpen])
 
   const isLoggedIn = Boolean(user)
-  const navItems = ALL_NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === 'admin')
 
   function handleLogout() {
     clearSession()

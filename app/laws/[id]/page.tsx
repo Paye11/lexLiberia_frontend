@@ -109,7 +109,21 @@ export default async function LawDetailPage({
             </div>
           ) : null}
 
-
+          <div className="mt-12 rounded-lg border border-border bg-muted/40 p-6">
+            <h3 className="font-heading text-base font-semibold text-foreground">
+              Need deeper analysis, a draft, or a second opinion?
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Use AI Research (GPT-powered) or Ask Me (Perplexity Sonar) about this
+              statute and related case law. Five advanced task modes are available
+              on paid plans: Research, Draft, Review, Explain, and Compare — both
+              cite Liberian authorities first.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button render={<Link href="/ai-research">AI Research</Link>} />
+              <Button variant="outline" render={<Link href="/ask-me">Ask Me</Link>} />
+            </div>
+          </div>
         </article>
     </>
   )

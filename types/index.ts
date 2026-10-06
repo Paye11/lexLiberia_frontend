@@ -88,4 +88,8 @@ export interface ChatMessage {
   citations?: ChatCitation[]
   webSearchUsed?: boolean
   webSources?: WebSource[]
+  metadata?: {
+    mode?: 'research' | 'draft' | 'review' | 'explain' | 'compare'
+    [key: string]: unknown
+  }
 }

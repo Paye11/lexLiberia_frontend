@@ -385,6 +385,7 @@ export const plans: Plan[] = [
       'Unlimited document views',
       'Supreme Court opinions access',
       'Bookmarks & downloads',
+      'AI Research + Ask Me: research, explain, and compare modes',
     ],
   },
   {
@@ -400,6 +401,7 @@ export const plans: Plan[] = [
       'Related cases & cross-references',
       'PDF export & print',
       'Priority support',
+      'Unlimited AI: Draft motions, contracts, affidavits, demand letters; Review pleadings with strengths/weaknesses',
     ],
   },
   {
@@ -430,9 +432,9 @@ export const faqs: FaqItem[] = [
       'Our library is compiled from official gazettes, the Liberian Code of Laws Revised, and Supreme Court records, and is updated regularly as new materials are published.',
   },
   {
-    question: 'Are AI legal research tools available on paid plans?',
+    question: 'What do the AI Research and Ask Me assistants actually do?',
     answer:
-      'AI research assistants are currently restricted to LexLiberia administrators for quality control. Premium plans focus on expanded document access, citations, export, and priority support.',
+      'Both assistants use Liberian authorities first (LexLiberia uploads, Supreme Court opinions at judiciary.gov.lr, and LiberLII), then the wider web, with citations always included. Five task modes are available: Research (find the law with cites), Draft (write Liberian-style motions, affidavits, contracts, demand letters, deeds, petitions, wherefore clauses with signature blocks), Review (strengths / weaknesses / next-steps on an attached pleading), Explain (plain-language summary plus detailed law), and Compare (side-by-side comparison + recommendation). The Student plan unlocks Research / Explain / Compare; the Lawyer and Court plans add unlimited Draft and Review modes.',
   },
   {
     question: 'Do you offer discounts for institutions?',
