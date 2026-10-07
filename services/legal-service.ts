@@ -30,12 +30,13 @@ import type {
  * default to 'http://localhost:5000/api' when the env var is missing so that
  * login/register flows never silently differ from marketing-page flows.
  */
-const _RAW_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api'
+const _RAW_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000'
 const API_BASE_URL = _RAW_URL.trim().replace(/\/+$/, '').replace(/\.+$/, '')
 
 async function fetchJson<T>(path: string, fallback: T): Promise<T> {
   try {
-    const res = await fetch(`${API_BASE_URL}${path}`, {
+    const url = `${API_BASE_URL}/api${path}`
+    const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
       next: { revalidate: 300 },
       signal: AbortSignal.timeout(2500),
@@ -44,7 +45,7 @@ async function fetchJson<T>(path: string, fallback: T): Promise<T> {
     return (await res.json()) as T
   } catch (error) {
     console.warn(
-      `[legal-service] fetch failed for ${path} (${API_BASE_URL}${path}); falling back to mock data.`,
+      `[legal-service] fetch failed for /api${path} (${API_BASE_URL}/api${path}); falling back to mock data.`,
       error instanceof Error ? error.message : error,
     )
     return fallback

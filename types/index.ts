@@ -19,6 +19,8 @@ export interface Law {
   chapter?: string
   sections?: { number: string; heading: string; body: string }[]
   content?: string
+  documentId?: string
+  locked?: boolean
 }
 
 export interface Opinion {
