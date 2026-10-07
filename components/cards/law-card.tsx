@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Bookmark, Eye, Calendar, ArrowUpRight } from 'lucide-react'
+import { Bookmark, Eye, Calendar, ArrowUpRight, Filter } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { Law } from '@/types'
@@ -18,6 +19,7 @@ function formatDate(date: string) {
 }
 
 export function LawCard({ law, index = 0 }: { law: Law; index?: number }) {
+  const router = useRouter()
   const [bookmarked, setBookmarked] = useState(false)
 
   async function handleOpenDirect(e: React.MouseEvent) {
@@ -34,6 +36,22 @@ export function LawCard({ law, index = 0 }: { law: Law; index?: number }) {
     window.location.href = `/laws/${encodeURIComponent(law.id)}`
   }
 
+  function handleCategoryClick(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const params = new URLSearchParams()
+    if (law.categorySlug) params.set('category', law.categorySlug)
+    router.push(`/laws${params.toString() ? `?${params.toString()}` : ''}`)
+  }
+
+  function handleTypeClick(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const params = new URLSearchParams()
+    params.set('type', law.type)
+    router.push(`/laws?${params.toString()}`)
+  }
+
   return (
     <Link
       href={`/laws/${encodeURIComponent(law.id)}`}
@@ -48,8 +66,28 @@ export function LawCard({ law, index = 0 }: { law: Law; index?: number }) {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge>{law.category}</Badge>
-            <Badge variant="muted">{law.type}</Badge>
+            <button
+              type="button"
+              onClick={handleCategoryClick}
+              className="hover:opacity-80 transition-opacity"
+              title={`Show all ${law.category} laws`}
+            >
+              <Badge className="cursor-pointer gap-1">
+                <Filter className="size-3 opacity-70" />
+                {law.category}
+              </Badge>
+            </button>
+            <button
+              type="button"
+              onClick={handleTypeClick}
+              className="hover:opacity-80 transition-opacity"
+              title={`Show all ${law.type} documents`}
+            >
+              <Badge variant="muted" className="cursor-pointer gap-1">
+                <Filter className="size-3 opacity-70" />
+                {law.type}
+              </Badge>
+            </button>
           </div>
           <button
             type="button"

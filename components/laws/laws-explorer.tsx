@@ -1,6 +1,6 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { FileSearch, Search, SlidersHorizontal, X } from 'lucide-react'
 import { LawCard } from '@/components/cards/law-card'
@@ -40,6 +40,7 @@ export function LawsExplorer({
   categories: Category[]
 }) {
   const params = useSearchParams()
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [type, setType] = useState('all')
@@ -50,7 +51,27 @@ export function LawsExplorer({
   useEffect(() => {
     setQuery(params.get('q') ?? '')
     setCategory(params.get('category') ?? 'all')
+    setType(params.get('type') ?? 'all')
+    setYear(params.get('year') ?? 'all')
+    if (params.get('sort')) {
+      const s = params.get('sort')
+      if (s === 'newest' || s === 'oldest' || s === 'views') setSort(s)
+    }
   }, [params])
+
+  useEffect(() => {
+    const sp = new URLSearchParams()
+    if (query) sp.set('q', query)
+    if (category && category !== 'all') sp.set('category', category)
+    if (type && type !== 'all') sp.set('type', type)
+    if (year && year !== 'all') sp.set('year', year)
+    if (sort && sort !== 'newest') sp.set('sort', sort)
+    const next = sp.toString() ? `/laws?${sp.toString()}` : '/laws'
+    const current = window.location.pathname + window.location.search
+    if (current !== next) {
+      router.replace(next, { scroll: false })
+    }
+  }, [query, category, type, year, sort, router])
 
   useEffect(() => {
     if (!filtersOpen) return undefined
@@ -91,7 +112,9 @@ export function LawsExplorer({
         law.summary.toLowerCase().includes(q) ||
         law.category.toLowerCase().includes(q)
       const matchesCategory =
-        category === 'all' || law.categorySlug === category
+        category === 'all' ||
+        law.categorySlug === category ||
+        law.category.toLowerCase() === category.toLowerCase()
       const matchesType = type === 'all' || law.type === type
       const matchesYear = year === 'all' || String(law.year) === year
       return matchesQuery && matchesCategory && matchesType && matchesYear
